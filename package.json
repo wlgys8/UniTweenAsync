@@ -1,0 +1,13 @@
+{
+  "name": "com.ms.async.tween",
+  "display": "Unity Tween Async",
+  "version": "0.0.1",
+  "description": "Unity Async Tween Functions",
+  "displayName": "UniTweenAsync",
+  "type": "library",
+  "unity": "2018.3",
+  "dependencies": {
+    "com.ms.litask":"https://github.com/wlgys8/LitTask.git",
+    "com.ms.async":"https://github.com/wlgys8/MSAsync.git"
+  }
+}
