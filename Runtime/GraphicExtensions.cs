@@ -20,7 +20,7 @@ namespace MS.TweenAsync.UI{
             context.graphic.color = Color.LerpUnclamped(context.fromColor,context.toColor,lerp);
         };
 
-        public static LitTask ColorToAsync(this Graphic graphic,ColorToOptions options,ref TweenOperationToken operation){
+        public static LitTask ColorToAsync(this Graphic graphic,ColorToOptions options,TweenOperationToken operation = default){
             var context = new ColorToContext(){
                 graphic = graphic,
                 fromColor = graphic.color,
