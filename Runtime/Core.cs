@@ -8,22 +8,12 @@ namespace MS.TweenAsync{
 
     public static class CoreUtils{
 
-        public static async LitTask RunLerpAsync<T>(TweenOptions tweenOptions, OnLerp<T> onLerp,T state,TweenOperation operation = null){
-            if(operation == null){
-                operation = TweenOperation.DEFAULT;
-            }
+        public static async LitTask RunLerpAsync<T>(TweenOptions tweenOptions, OnLerp<T> onLerp,T state,TweenOperationToken operation = default){
             var postLerpType = tweenOptions.postLerpType;
             var ticker = new TimeTicker(tweenOptions.duration,tweenOptions.postLerpType);
-            // var clock = new TweenClock(tweenOptions.duration,tweenOptions.postLerpType,tweenOptions.ignoreTimeScale);
             var ease = tweenOptions.ease;
-            operation.ThrowIfCancellationRequested();
             while(true){
-                await new UnityUpdate();
-                operation.ThrowIfCancellationRequested();
-                if(operation.paused){
-                    continue;
-                }
-                var deltaTime = tweenOptions.ignoreTimeScale?Time.unscaledDeltaTime:Time.deltaTime * operation.timeScale;
+                float deltaTime = await operation.WaitTickAsync(tweenOptions.ignoreTimeScale);
                 ticker.Tick(deltaTime);
                 var isEnd = ticker.isEnd;
                 var normalizedTime = ticker.normalizedTime;

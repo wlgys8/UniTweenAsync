@@ -16,14 +16,14 @@ namespace MS.TweenAsync{
             context.transform.anchoredPosition = Vector2.Lerp(context.fromPosition,context.toPosition,lerp);
         };
 
-        public static async LitTask AnchorToAsync(this RectTransform transform,AnchorToOptions options,TweenOperation operation = null){
+        public static LitTask AnchorToAsync(this RectTransform transform,AnchorToOptions options,ref TweenOperationToken operation){
             var tweenOptions = options.tweenOptions;
             var context = new AnchorToLerpContext(){
                 fromPosition = transform.anchoredPosition,
                 toPosition = options.position,
                 transform = transform
             };
-            await CoreUtils.RunLerpAsync<AnchorToLerpContext>(tweenOptions,_anchorToLerpFunc,context,operation);
+            return CoreUtils.RunLerpAsync<AnchorToLerpContext>(tweenOptions,_anchorToLerpFunc,context,operation);
         }
     }
 

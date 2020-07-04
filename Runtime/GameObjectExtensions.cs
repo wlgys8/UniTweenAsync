@@ -32,7 +32,7 @@ namespace MS.TweenAsync{
         };
 
 
-        public static LitTask MoveToAsync(this GameObject gameObject,MoveToOptions options,TweenOperation operation = null){
+        public static LitTask MoveToAsync(this GameObject gameObject,MoveToOptions options,TweenOperationToken operation = default){
             Vector3 fromPosition = Vector3.zero;
             var transform = gameObject.transform;
             var toPosition = options.position;
@@ -59,7 +59,7 @@ namespace MS.TweenAsync{
             return CoreUtils.RunLerpAsync(tweenOptions,moveLerpFunc,moveLerpContext,operation);
         }
 
-        public static LitTask MoveByAsync(this GameObject gameObject,MoveByOptions options,TweenOperation operation = null){
+        public static LitTask MoveByAsync(this GameObject gameObject,MoveByOptions options,TweenOperationToken operation = default){
             var transform = gameObject.transform;
             var offset = options.offset;
             var toPosition = default(Vector3);
@@ -99,7 +99,7 @@ namespace MS.TweenAsync{
             transform.localScale = scale;
         };
 
-        public static LitTask ScaleToAsync(this GameObject gameObject,ScaleToOptions options,TweenOperation operation = null){
+        public static LitTask ScaleToAsync(this GameObject gameObject,ScaleToOptions options,TweenOperationToken operation = default){
             var transform = gameObject.transform;
             Vector3 fromScale = transform.localScale;
             var toScale = options.scale;
@@ -126,7 +126,7 @@ namespace MS.TweenAsync{
         };
 
 
-        public static LitTask RotateToAsync(this GameObject gameObject,RotateToOptions options,TweenOperation operation){
+        public static LitTask RotateToAsync(this GameObject gameObject,RotateToOptions options,TweenOperationToken operation = default){
             var transform = gameObject.transform;
             var fromAngles = transform.localEulerAngles;
             var targetAngles = options.eulerAngles;
