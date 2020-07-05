@@ -7,6 +7,9 @@ using MS.Async;
 namespace MS.TweenAsync.UI{
     public static class GraphicExtensions 
     {
+
+//==== ColorAnimation =====//
+
         private struct ColorToContext{
 
             public Graphic graphic;
@@ -28,6 +31,28 @@ namespace MS.TweenAsync.UI{
             };
             return CoreUtils.RunLerpAsync<ColorToContext>(options.tweenOptions,_colorLerpFunc,context,operation);
         }
+
+//====== Alpha Animation ======= //
+
+
+        public static LitTask AlphaTo(this Graphic graphic,AlphaToOptions options, TweenOperationToken operationToken = default){
+            var fromColor = graphic.color;
+            var toColor = fromColor;
+            toColor.a = options.alpha;
+            return graphic.ColorToAsync(new ColorToOptions(toColor,options.tweenOptions),operationToken);
+        }
+    }
+
+    public struct AlphaToOptions{
+        public float alpha;
+        public TweenOptions tweenOptions;
+        public AlphaToOptions(float alpha,float duration = 1){
+            this.alpha = alpha;
+            tweenOptions = new TweenOptions(duration);
+        }
+
+
+
     }
 
     public struct ColorToOptions{
@@ -39,6 +64,10 @@ namespace MS.TweenAsync.UI{
             this.tweenOptions = new TweenOptions(duration);
         }
 
+        public ColorToOptions(Color color,TweenOptions tweenOptions){
+            this.color = color;
+            this.tweenOptions = tweenOptions;
+        }
     }
 
 
