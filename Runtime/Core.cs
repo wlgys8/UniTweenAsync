@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace MS.TweenAsync{
 
-    public static class CoreUtils{
+    public static class TweenUtility{
 
         public static async LitTask RunLerpAsync<T>(TweenOptions tweenOptions, OnLerp<T> onLerp,T state,TweenOperationToken operation = default){
             var postLerpType = tweenOptions.postLerpType;
@@ -27,8 +27,20 @@ namespace MS.TweenAsync{
                 }
             }
         }
-           
+
+        public static async LitTask Delay(float seconds,bool ignoreTimeScale = false, TweenOperationToken operationToken = default){
+            var ticker = new TimeTicker(seconds,PostExtrapolateType.None);
+            while(true){
+                float deltaTime = await operationToken.WaitTickAsync(ignoreTimeScale);
+                ticker.Tick(deltaTime);
+                if(ticker.isEnd){
+                    break;
+                }
+            }
+        }
     }
+
+
 
     public delegate void OnLerp<T>(float lerp,T state);   
 

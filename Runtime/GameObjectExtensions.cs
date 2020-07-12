@@ -56,7 +56,7 @@ namespace MS.TweenAsync{
                 spaceType = options.spaceType,
                 customSpaceTransform = options.customSpaceTransform
             };
-            return CoreUtils.RunLerpAsync(tweenOptions,moveLerpFunc,moveLerpContext,operation);
+            return TweenUtility.RunLerpAsync(tweenOptions,moveLerpFunc,moveLerpContext,operation);
         }
 
         public static LitTask MoveByAsync(this GameObject gameObject,MoveByOptions options,TweenOperationToken operation = default){
@@ -109,7 +109,7 @@ namespace MS.TweenAsync{
                 fromScale = fromScale,
                 toScale = toScale
             };
-            return CoreUtils.RunLerpAsync<ScaleLerpContext>(tweenOptions,scaleLerpFunc,scaleLerpContext,operation);
+            return TweenUtility.RunLerpAsync<ScaleLerpContext>(tweenOptions,scaleLerpFunc,scaleLerpContext,operation);
         }
 
 //Rotate Animation
@@ -135,7 +135,7 @@ namespace MS.TweenAsync{
                 fromAngles = fromAngles,
                 toAngles = targetAngles,
             };
-            return CoreUtils.RunLerpAsync<RotateLerpContext>(options.tweenOptions,rotateLerpFunc, rotateCtx,operation);
+            return TweenUtility.RunLerpAsync<RotateLerpContext>(options.tweenOptions,rotateLerpFunc, rotateCtx,operation);
         }
     }
 

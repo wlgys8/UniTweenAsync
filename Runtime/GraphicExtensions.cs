@@ -29,7 +29,7 @@ namespace MS.TweenAsync.UI{
                 fromColor = graphic.color,
                 toColor = options.color
             };
-            return CoreUtils.RunLerpAsync<ColorToContext>(options.tweenOptions,_colorLerpFunc,context,operation);
+            return TweenUtility.RunLerpAsync<ColorToContext>(options.tweenOptions,_colorLerpFunc,context,operation);
         }
 
 //====== Alpha Animation ======= //
