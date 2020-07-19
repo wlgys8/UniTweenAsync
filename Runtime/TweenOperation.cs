@@ -105,11 +105,13 @@ namespace MS.TweenAsync{
                 }
                 return deltaTime;
             }else{
+                var lastTime = 0f;
                 do{
+                    lastTime = Time.realtimeSinceStartup;
                     await new UnityUpdate();
                     ThrowIfCancellationRequested(tokenId);
                 }while(paused);
-                var deltaTime = Time.unscaledDeltaTime;
+                var deltaTime = Time.realtimeSinceStartup - lastTime;
                 if(_lastCalculatedFrame != Time.frameCount){
                     //if current frame deltaTime not added to time
                     _lastCalculatedFrame = Time.frameCount;
