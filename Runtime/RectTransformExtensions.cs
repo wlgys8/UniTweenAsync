@@ -13,7 +13,7 @@ namespace MS.TweenAsync{
         }
 
         private static OnLerp<AnchorToLerpContext> _anchorToLerpFunc = (lerp,context)=>{
-            context.transform.anchoredPosition = Vector2.Lerp(context.fromPosition,context.toPosition,lerp);
+            context.transform.anchoredPosition = Vector2.LerpUnclamped(context.fromPosition,context.toPosition,lerp);
         };
 
         public static LitTask AnchorToAsync(this RectTransform transform,AnchorToOptions options,TweenOperationToken operation = default){
