@@ -46,7 +46,9 @@ namespace MS.TweenAsync{
                     break;
             }
             if(options.spaceType == SpaceType.World){
-                toPosition = transform.worldToLocalMatrix.MultiplyPoint3x4(toPosition);
+                if(transform.parent){
+                    toPosition = transform.parent.worldToLocalMatrix.MultiplyPoint3x4(toPosition);
+                }
             }
             var tweenOptions = options.tweenOptions;
             var moveLerpContext = new MoveLerpContext(){
