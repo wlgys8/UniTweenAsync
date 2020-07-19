@@ -14,7 +14,6 @@ namespace MS.TweenAsync.UI{
 
             public Graphic graphic;
             public Color fromColor;
-
             public Color toColor;
         }
 
@@ -43,6 +42,30 @@ namespace MS.TweenAsync.UI{
         }
     }
 
+    public static class CanvasGroupExtensions{
+
+        private struct AlphaToContext{
+
+            public CanvasGroup canvasGroup;
+            public float fromAlpha;
+            public float toAlpha;
+        }
+
+        private static OnLerp<AlphaToContext> _alphaLerpFunc = (lerp,context)=>{
+            context.canvasGroup.alpha = Mathf.LerpUnclamped(context.fromAlpha,context.toAlpha,lerp);
+        };
+
+        public static LitTask AlphaTo(this CanvasGroup canvasGroup,AlphaToOptions options, TweenOperationToken operationToken = default){
+            var context = new AlphaToContext(){
+                canvasGroup = canvasGroup,
+                fromAlpha = canvasGroup.alpha,
+                toAlpha = options.alpha,
+            };
+            return TweenUtility.RunLerpAsync<AlphaToContext>(options.tweenOptions,_alphaLerpFunc,context,operationToken);
+        }
+
+    }
+
     public struct AlphaToOptions{
         public float alpha;
         public TweenOptions tweenOptions;
@@ -50,9 +73,6 @@ namespace MS.TweenAsync.UI{
             this.alpha = alpha;
             tweenOptions = new TweenOptions(duration);
         }
-
-
-
     }
 
     public struct ColorToOptions{
