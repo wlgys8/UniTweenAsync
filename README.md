@@ -13,57 +13,103 @@ Async Tween Function Extensions.
 * [MSAsync - Unity Awaiters Implementation](https://github.com/wlgys8/MSAsync)
 
 
-# Usage
+# Standard Implementation
 
-* All async function implemented by Extensions. 
-* (optional) - Use `TweenOperation` to control the animation state. 
+* All async tween function will return `TweenOperation`.
+* Use `TweenOptions` to config the tween animation.
 
-## GameObject Tween for Example
+
+## TweenOperation
+
+- `async/await`
 
 ```csharp
 
-//use tween operation to control the animation state
-private TweenOperation operation = new TweenOperation();
-
 async void Start(){
     //move to position (100,100,100) and wait the animation complete
-    await gameObject.MoveToAsync(new MoveToOptions(new Vector3(100,100,100)));
-    //then, scale to (2,2,2) and forget it
-    gameObject.ScaleToAsync(new ScaleToOptions(new Vector3(2,2,2))).Forget();
-    
-    //rotate forever
-    RotateForever().Forget();
-}
-
-private LitTask RotateForever(){
-    try{
-        while(true){
-            //use tween operation to control the animation state
-            await gameObject.RotateToAsync(new RotateToOptions(new Vector3(360,0,0)),operation);
-        }
-    }catch(LitCancelException){
-        //operation.Cancel will abort the tween and throw LitCancelException
-    }catch(Exception){
-        //other exceptions
-    }
-}
-
-void OnEnable(){
-    //if script enabled, then resume the rotate task
-    operation.paused = false;
-}
-
-void OnDisable(){
-    //if script disabled, then pause the rotate task
-    operation.paused = true;
-}
-
-void OnDestroy(){
-    //cancel the task
-    operation.Cancel();
+    var operation = gameObject.MoveToAsync(new MoveToOptions(new Vector3(100,100,100)));
+    //use Task for await
+    await operation.Task;
+    //animation completed.
 }
 
 ```
 
+- `Control tween state`
 
-# TO BE CONTINUE
+```csharp
+
+private TweenOperation operation;
+
+void Start(){
+    operation = gameObject.MoveToAsync(new MoveToOptions(new Vector3(100,100,100)));
+}
+
+///pause tween animation
+void PauseTween(){
+    operation.paused = true;
+}
+
+
+///resume tween animation
+void ResumeTween(){
+    operation.paused = false;
+}
+
+///cancel tween animation
+void CancelTween(){
+    operation.Cancel();
+}
+
+//locate the tween animation to last frame.
+void RanToEnd(){
+    operation.RanToEnd();
+}
+
+```
+
+## TweenOptions
+
+- `duration` - how much time the animation will play. 
+- `ignoreTimeScale`
+- `ease` - ease function for animation. Default is Linear.
+
+```csharp
+
+void Start(){
+    gameObject.MoveToAsync(
+        new MoveToOptions(){
+            position = new Vecotor3(100,100,100),
+            tweenOptions = new TweenOptions(){
+                duration = 0.5f,
+                ease = EaseFuncs.OutBack,
+                ignoreTimeScale = true,
+            }
+        }
+    )
+}
+
+```
+
+# Async Tween Functions List
+
+## Transform
+
+- `MoveToAsync`
+- `MoveByAsync`
+- `ScaleToAsync`
+- `RotateToAsync`
+
+## UI.Graphic
+
+- `TintToAsync`
+- `AlpahToAsync`
+
+## CanvasGroup
+
+- `AlphaToAsync`
+
+## RectTransform
+
+- `AnchoredPositionToAsync`
+- `SizeToAsync`

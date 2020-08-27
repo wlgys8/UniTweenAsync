@@ -2,70 +2,83 @@
 using MS.Async;
 
 namespace MS.TweenAsync{
-    public static class GameObjectExtensions
-    {
 
-//Move animation
 
-        private struct MoveLerpContext{
-            public Transform transform;
+    public static class MoveExtensions{
+
+        private struct State{
+
             public Vector3 fromPosition;
-            public Vector3 toPosition;
-            public SpaceType spaceType;
 
-            public Transform customSpaceTransform;
+            public Vector3 toPosition;
+
+            public MoveToOptions options;
+
+            public Transform target;
         }
 
+   
+        static MoveExtensions(){
+            TweenAction<State>.RegisterStart(OnStart);
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+            TweenAction<State>.RegisterComplete(OnComplete);
+        }
 
-        private static OnLerp<MoveLerpContext> moveLerpFunc = (float lerp,MoveLerpContext ctx)=>{
-            var transform = ctx.transform;
-            var position = Vector3.LerpUnclamped(ctx.fromPosition,ctx.toPosition,lerp);
-            switch(ctx.spaceType){
-                case SpaceType.Local:
-                case SpaceType.World:
-                transform.localPosition = position;
-                break;
-                case SpaceType.Custom:
-                transform.position = ctx.customSpaceTransform.TransformPoint(position);
-                break;
-            }
-        };
-
-
-        public static LitTask MoveToAsync(this GameObject gameObject,MoveToOptions options,TweenOperationToken operation = default){
-            Vector3 fromPosition = Vector3.zero;
-            var transform = gameObject.transform;
-            var toPosition = options.position;
+        private static void OnStart(ref State state){
+            var options = state.options;
+            var transform = state.target;
             switch(options.spaceType){
                 case SpaceType.Local:
                 case SpaceType.World:
-                    fromPosition = transform.localPosition;
+                    state.fromPosition = transform.localPosition;
                     break;
                 case SpaceType.Custom:
-                    fromPosition = options.customSpaceTransform.worldToLocalMatrix.MultiplyPoint3x4(transform.position);
+                    state.fromPosition = options.customSpaceTransform.worldToLocalMatrix.MultiplyPoint3x4(transform.position);
                     break;
             }
-            if(options.spaceType == SpaceType.World){
-                if(transform.parent){
-                    toPosition = transform.parent.worldToLocalMatrix.MultiplyPoint3x4(toPosition);
-                }
+            state.toPosition = options.position;
+            if(options.spaceType == SpaceType.World && transform.parent){
+                state.toPosition = transform.parent.worldToLocalMatrix.MultiplyPoint3x4(options.position);
             }
-            var tweenOptions = options.tweenOptions;
-            var moveLerpContext = new MoveLerpContext(){
-                transform = transform,
-                fromPosition = fromPosition,
-                toPosition = toPosition,
-                spaceType = options.spaceType,
-                customSpaceTransform = options.customSpaceTransform
-            };
-            return TweenUtility.RunLerpAsync(tweenOptions,moveLerpFunc,moveLerpContext,operation);
         }
 
-        public static LitTask MoveByAsync(this GameObject gameObject,MoveByOptions options,TweenOperationToken operation = default){
-            var transform = gameObject.transform;
+        private static void OnUpdate(ActionState actionState, ref State state){
+            var transform = state.target;
+            var localPosition = Vector3.LerpUnclamped(state.fromPosition,state.toPosition,actionState.interpolatedTime);
+            switch(state.options.spaceType){
+                case SpaceType.Local:
+                case SpaceType.World:
+                transform.localPosition = localPosition;
+                break;
+                case SpaceType.Custom:
+                transform.position = state.options.customSpaceTransform.TransformPoint(localPosition);
+                break;
+            }
+        }
+
+        private static void OnComplete(ref State state){
+
+        }
+
+        public static TweenOperation MoveToAsync(this Transform transform,MoveToOptions options){
+            var state = new State(){
+                options = options,
+                target = transform,
+            };
+            return TweenAction<State>.Prepare(state,options.tweenOptions);
+        }
+
+        public static TweenOperation MoveToAsync(this GameObject gameObject,MoveToOptions options){
+            return MoveToAsync(gameObject.transform,options);
+        }
+
+        public static TweenOperation MoveToAsync(this Transform transform,Vector3 localPosition,float duration = 1){
+            return transform.MoveToAsync(new MoveToOptions(localPosition,duration));
+        }
+
+        public static TweenOperation MoveByAsync(this Transform transform, MoveByOptions options){
             var offset = options.offset;
             var toPosition = default(Vector3);
-
             switch(options.spaceType){
                 case SpaceType.Local:
                     toPosition = transform.localPosition + offset;
@@ -81,66 +94,98 @@ namespace MS.TweenAsync{
             moveToOptions.tweenOptions = options.tweenOptions;
             moveToOptions.spaceType = options.spaceType;
             moveToOptions.customSpaceTransform = options.customSpaceTransform;
-            return MoveToAsync(gameObject, moveToOptions,operation);
-
-        }
-        
-//Scale Animation
-
-        private struct ScaleLerpContext{
-            public Transform transform;
-            public Vector3 fromScale;
-            public Vector3 toScale;
+            return MoveToAsync(transform, moveToOptions);
         }
 
-
-
-        private static OnLerp<ScaleLerpContext> scaleLerpFunc = (float lerp,ScaleLerpContext ctx)=>{
-            var transform = ctx.transform;
-            var scale = Vector3.LerpUnclamped(ctx.fromScale,ctx.toScale,lerp);
-            transform.localScale = scale;
-        };
-
-        public static LitTask ScaleToAsync(this GameObject gameObject,ScaleToOptions options,TweenOperationToken operation = default){
-            var transform = gameObject.transform;
-            Vector3 fromScale = transform.localScale;
-            var toScale = options.scale;
-            var tweenOptions = options.tweenOptions;
-            var scaleLerpContext = new ScaleLerpContext(){
-                transform = transform,
-                fromScale = fromScale,
-                toScale = toScale
-            };
-            return TweenUtility.RunLerpAsync<ScaleLerpContext>(tweenOptions,scaleLerpFunc,scaleLerpContext,operation);
-        }
-
-//Rotate Animation
-        private struct RotateLerpContext{
-            public Transform transform;
-            public Vector3 fromAngles;
-            public Vector3 toAngles;
-        }
-
-        private static OnLerp<RotateLerpContext> rotateLerpFunc = (float lerp,RotateLerpContext ctx)=>{
-            var transform = ctx.transform;
-            var angles = Vector3.LerpUnclamped(ctx.fromAngles,ctx.toAngles,lerp);
-            transform.localEulerAngles = angles;
-        };
-
-
-        public static LitTask RotateToAsync(this GameObject gameObject,RotateToOptions options,TweenOperationToken operation = default){
-            var transform = gameObject.transform;
-            var fromAngles = transform.localEulerAngles;
-            var targetAngles = options.eulerAngles;
-            RotateLerpContext rotateCtx = new RotateLerpContext(){
-                transform = transform,
-                fromAngles = fromAngles,
-                toAngles = targetAngles,
-            };
-            return TweenUtility.RunLerpAsync<RotateLerpContext>(options.tweenOptions,rotateLerpFunc, rotateCtx,operation);
+        public static TweenOperation MoveByAsync(this GameObject gameObject, MoveByOptions options){
+            return gameObject.transform.MoveByAsync(options);
         }
     }
 
+
+    public static class ScaleExtensions{
+
+        private struct State{
+            public Vector3 fromScale;
+            public Vector3 toScale;
+            public ScaleToOptions options;
+            public Transform target;           
+        }
+
+        static ScaleExtensions(){
+            TweenAction<State>.RegisterStart(OnStart);
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+            TweenAction<State>.RegisterComplete(OnComplete);           
+        }
+
+        private static void OnStart(ref State state){
+            var options = state.options;
+            var transform = state.target;
+            state.fromScale = transform.localScale;
+        }
+
+        private static void OnUpdate(ActionState actionState, ref State state){
+            var transform = state.target;
+            var localScale = Vector3.LerpUnclamped(state.fromScale,state.toScale,actionState.interpolatedTime);
+            transform.localScale = localScale;
+        }
+
+        private static void OnComplete(ref State state){
+
+        }
+
+        public static TweenOperation ScaleToAsync(this Transform transform,ScaleToOptions options){
+            var state = new State(){
+                toScale = options.scale,
+                options = options,
+                target = transform,
+            };
+            return TweenAction<State>.Prepare(state,options.tweenOptions);
+        }
+
+        public static TweenOperation ScaleToAsync(this GameObject gameObject,ScaleToOptions options){
+            return gameObject.transform.ScaleToAsync(options);
+        }
+    }
+
+
+    public static class RotateExtensions{
+
+        private struct State{
+            public Transform target;
+            public Vector3 fromAngles;
+            public Vector3 toAngles;   
+            public RotateToOptions options;         
+        }
+
+        static RotateExtensions(){
+            TweenAction<State>.RegisterStart(OnStart);
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+        }
+
+        private static void OnStart(ref State state){
+            state.fromAngles = state.target.localEulerAngles;
+            state.toAngles = state.options.eulerAngles;
+        }
+
+        private static void OnUpdate(ActionState actionState,ref State state){
+            var angles = Vector3.LerpUnclamped(state.fromAngles,state.toAngles,actionState.interpolatedTime);
+            state.target.localEulerAngles = angles;
+        }
+
+
+        public static TweenOperation RotateToAsync(this Transform transform,RotateToOptions options){
+            var state = new State(){
+                options = options,
+                target = transform,
+            };
+            return TweenAction<State>.Prepare(state,options.tweenOptions);
+        }
+
+        public static TweenOperation RotateToAsync(this GameObject gameObject,RotateToOptions options){
+            return gameObject.transform.RotateToAsync(options);
+        }
+    }
 
 
     public struct MoveToOptions{

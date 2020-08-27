@@ -1,7 +1,7 @@
 {
   "name": "com.ms.async.tween",
   "display": "Unity Tween Async",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Unity Async Tween Functions",
   "displayName": "UniTweenAsync",
   "type": "library",

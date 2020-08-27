@@ -5,63 +5,71 @@ using UnityEngine.UI;
 using MS.Async;
 
 namespace MS.TweenAsync.UI{
-    public static class GraphicExtensions 
-    {
 
-//==== ColorAnimation =====//
+    public static partial class GraphicColorExtensions{
 
-        private struct ColorToContext{
+        private struct State{
 
-            public Graphic graphic;
-            public Color fromColor;
-            public Color toColor;
+            public Color from;
+            public Color to;
+            public Graphic target;
+
         }
 
+        static GraphicColorExtensions(){
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+        }
 
-        private static OnLerp<ColorToContext> _colorLerpFunc = (lerp,context)=>{
-            context.graphic.color = Color.LerpUnclamped(context.fromColor,context.toColor,lerp);
-        };
+        private static void OnUpdate(ActionState actionState,ref State state){
+            state.target.color = Color.LerpUnclamped(state.from,state.to,actionState.interpolatedTime);
+        }
 
-        public static LitTask ColorToAsync(this Graphic graphic,ColorToOptions options,TweenOperationToken operation = default){
-            var context = new ColorToContext(){
-                graphic = graphic,
-                fromColor = graphic.color,
-                toColor = options.color
+        public static TweenOperation TintToAsync(this Graphic graphic,TintToOptions options){
+            var state = new State(){
+                target = graphic,
+                from = graphic.color,
+                to = options.color,
             };
-            return TweenUtility.RunLerpAsync<ColorToContext>(options.tweenOptions,_colorLerpFunc,context,operation);
+            return TweenAction<State>.Prepare(state,options.tweenOptions);
         }
 
-//====== Alpha Animation ======= //
-
-
-        public static LitTask AlphaTo(this Graphic graphic,AlphaToOptions options, TweenOperationToken operationToken = default){
-            var fromColor = graphic.color;
-            var toColor = fromColor;
-            toColor.a = options.alpha;
-            return graphic.ColorToAsync(new ColorToOptions(toColor,options.tweenOptions),operationToken);
+        public static TweenOperation AlphaToAsync(this Graphic graphic, AlphaToOptions options){
+            var color = graphic.color;
+            color.a = options.alpha;
+            var colorOptions = new TintToOptions(){
+                color = color,
+                tweenOptions = options.tweenOptions,
+            };
+            return graphic.TintToAsync(colorOptions);
         }
     }
 
-    public static class CanvasGroupExtensions{
 
-        private struct AlphaToContext{
 
-            public CanvasGroup canvasGroup;
+    public static class CanvasGroupAlphaExtensions{
+
+        private struct State{
+
+            public CanvasGroup target;
             public float fromAlpha;
             public float toAlpha;
         }
 
-        private static OnLerp<AlphaToContext> _alphaLerpFunc = (lerp,context)=>{
-            context.canvasGroup.alpha = Mathf.LerpUnclamped(context.fromAlpha,context.toAlpha,lerp);
-        };
+        static CanvasGroupAlphaExtensions(){
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+        }
 
-        public static LitTask AlphaTo(this CanvasGroup canvasGroup,AlphaToOptions options, TweenOperationToken operationToken = default){
-            var context = new AlphaToContext(){
-                canvasGroup = canvasGroup,
+        private static void OnUpdate(ActionState actionState,ref State state){
+            state.target.alpha = Mathf.LerpUnclamped(state.fromAlpha,state.toAlpha,actionState.interpolatedTime);
+        }
+
+        public static TweenOperation AlphaToAsync(this CanvasGroup canvasGroup,AlphaToOptions options){
+            var state = new State(){
+                target = canvasGroup,
                 fromAlpha = canvasGroup.alpha,
                 toAlpha = options.alpha,
             };
-            return TweenUtility.RunLerpAsync<AlphaToContext>(options.tweenOptions,_alphaLerpFunc,context,operationToken);
+            return TweenAction<State>.Prepare(state,options.tweenOptions);
         }
 
     }
@@ -75,16 +83,16 @@ namespace MS.TweenAsync.UI{
         }
     }
 
-    public struct ColorToOptions{
+    public struct TintToOptions{
         public Color color;
         public TweenOptions tweenOptions;
 
-        public ColorToOptions(Color color,float duration = 1){
+        public TintToOptions(Color color,float duration = 1){
             this.color = color;
             this.tweenOptions = new TweenOptions(duration);
         }
 
-        public ColorToOptions(Color color,TweenOptions tweenOptions){
+        public TintToOptions(Color color,TweenOptions tweenOptions){
             this.color = color;
             this.tweenOptions = tweenOptions;
         }
