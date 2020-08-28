@@ -71,6 +71,8 @@ namespace MS.TweenAsync{
 
         private TweenOptions _tweenOptions;
 
+        private bool _paused = false;
+
         
         private TweenActionDriver(){
             _tickAction = (data)=>{
@@ -85,7 +87,7 @@ namespace MS.TweenAsync{
             _tweenOptions = options;
             _actionState = new ActionState(options.duration,options.ease);
             _userState = userState;
-            this.paused = false;
+            _paused = false;
             _token = token;
             _status = TweenActionDriverStatus.Prepared;
             TweenTicker.AddTick(this._tickAction);
@@ -136,7 +138,19 @@ namespace MS.TweenAsync{
         }
 
         public bool paused{
-            get;set;
+            get{
+                return _paused;
+            }set{
+                if(_paused == value){
+                    return;
+                }
+                _paused = value;
+                if(value){
+                    TweenTicker.RemoveTick(this._tickAction);
+                }else{
+                    TweenTicker.AddTick(this._tickAction);
+                }
+            }
         }
 
         public void RanToEnd(){
@@ -198,7 +212,9 @@ namespace MS.TweenAsync{
         }
 
         private void FireOnComplete(){
-            TweenTicker.RemoveTick(this._tickAction);
+            if(!this.paused){
+                TweenTicker.RemoveTick(this._tickAction);
+            }
             try{
                 TweenAction<TState>.Complete(ref _userState);
             }catch(System.Exception e){
