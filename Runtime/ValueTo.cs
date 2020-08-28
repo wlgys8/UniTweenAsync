@@ -42,6 +42,21 @@ namespace MS.TweenAsync{
             ValueUtility<double>.lerpOperator = (from,to,t)=>{
                 return from + (to - from) * t;
             };
+            ValueUtility<Color>.lerpOperator = (from,to,t)=>{
+                return Color.LerpUnclamped(from,to,t);
+            };
+            ValueUtility<Vector2>.lerpOperator = (from,to,t)=>{
+                return Vector2.LerpUnclamped(from,to,t);
+            };
+            ValueUtility<Vector3>.lerpOperator = (from,to,t)=>{
+                return Vector3.LerpUnclamped(from,to,t);
+            };
+            ValueUtility<Vector4>.lerpOperator = (from,to,t)=>{
+                return Vector4.LerpUnclamped(from,to,t);
+            };
+            ValueUtility<Quaternion>.lerpOperator = (from,to,t)=>{
+                return Quaternion.LerpUnclamped(from,to,t);
+            };
         }
 
         internal static void AssertSupport<T>(){
