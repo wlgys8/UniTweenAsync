@@ -70,8 +70,8 @@ void RanToEnd(){
 
 ## TweenOptions
 
-- `duration` - how much time the animation will play. 
-- `ignoreTimeScale`
+- `duration` - how much time does the animation take. 
+- `ignoreTimeScale` should the animation affected by Time.timeScale
 - `ease` - ease function for animation. Default is Linear.
 
 ```csharp
@@ -113,3 +113,39 @@ void Start(){
 
 - `AnchoredPositionToAsync`
 - `SizeToAsync`
+
+
+# TweenComposite
+
+- TweenComposite.Sequence
+- TweenComposite.Parallel
+
+
+# ValueToAsync
+
+TweenAsync support run custom interpolation function between two State.
+
+```csharp
+
+//duration is 1 second.
+var tweenOptions = new TweenOptions(1);
+
+//update function.
+//value will change from 0 to 100
+Action<float> update = (value)=>{
+    Debug.Log("current value:" + value);
+};
+
+new ValueToOptions<float>(0,100,interpolation,tweenOptions).RunAsync();
+
+```
+
+Builtin supported types: 
+- float
+- double
+- int
+- Color
+- Vector2
+- Vector3
+- Vector4
+- Quaternion
