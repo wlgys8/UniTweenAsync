@@ -8,39 +8,58 @@ namespace MS.TweenAsync.UI{
 
     public static partial class GraphicColorExtensions{
 
-        private struct State{
-
+        private struct TintToState{
             public Color from;
             public Color to;
             public Graphic target;
-
         }
+
+        private struct AlphaToState{
+            public float from;
+            public float to;
+            public Graphic target;
+        }
+
 
         static GraphicColorExtensions(){
-            TweenAction<State>.RegisterUpdate(OnUpdate);
+            TweenAction<TintToState>.RegisterStart(OnTintStart);
+            TweenAction<TintToState>.RegisterUpdate(OnTintUpdate);
+            TweenAction<AlphaToState>.RegisterStart(OnAlphaToStart);
         }
 
-        private static void OnUpdate(ActionState actionState,ref State state){
+        private static void OnTintStart(ref TintToState state){
+            state.from = state.target.color;
+        }
+
+        private static void OnTintUpdate(ActionState actionState,ref TintToState state){
             state.target.color = Color.LerpUnclamped(state.from,state.to,actionState.interpolatedTime);
         }
 
         public static TweenOperation TintToAsync(this Graphic graphic,TintToOptions options){
-            var state = new State(){
+            var state = new TintToState(){
                 target = graphic,
-                from = graphic.color,
                 to = options.color,
             };
-            return TweenAction<State>.Prepare(state,options.tweenOptions);
+            return TweenAction<TintToState>.Prepare(state,options.tweenOptions);
+        }
+
+
+        private static void OnAlphaToStart(ref AlphaToState state){
+            state.from = state.target.color.a;
+        }
+        private static void OnAlphaToUpdate(ActionState actionState,ref AlphaToState state){
+            var alpha = Mathf.LerpUnclamped(state.from,state.to,actionState.interpolatedTime);
+            var color = state.target.color;
+            color.a = alpha;
+            state.target.color = color;
         }
 
         public static TweenOperation AlphaToAsync(this Graphic graphic, AlphaToOptions options){
-            var color = graphic.color;
-            color.a = options.alpha;
-            var colorOptions = new TintToOptions(){
-                color = color,
-                tweenOptions = options.tweenOptions,
+            var state = new AlphaToState(){
+                target = graphic,
+                to = options.alpha,
             };
-            return graphic.TintToAsync(colorOptions);
+            return TweenAction<AlphaToState>.Prepare(state,options.tweenOptions);
         }
     }
 
@@ -56,7 +75,12 @@ namespace MS.TweenAsync.UI{
         }
 
         static CanvasGroupAlphaExtensions(){
+            TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
+        }
+
+        private static void OnStart(ref State state){
+            state.fromAlpha = state.target.alpha;
         }
 
         private static void OnUpdate(ActionState actionState,ref State state){
@@ -66,7 +90,6 @@ namespace MS.TweenAsync.UI{
         public static TweenOperation AlphaToAsync(this CanvasGroup canvasGroup,AlphaToOptions options){
             var state = new State(){
                 target = canvasGroup,
-                fromAlpha = canvasGroup.alpha,
                 toAlpha = options.alpha,
             };
             return TweenAction<State>.Prepare(state,options.tweenOptions);
