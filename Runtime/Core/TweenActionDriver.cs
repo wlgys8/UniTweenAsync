@@ -4,6 +4,7 @@ using UnityEngine;
 
 
 namespace MS.TweenAsync{
+    using MS.Async;
     using System;
     using Async.CompilerServices;
 
@@ -34,9 +35,13 @@ namespace MS.TweenAsync{
         bool IsCompleted();
 
         void AddOnComplete(Action action);
+
+        TweenStatus status{
+            get;
+        }
     }
 
-    internal enum TweenActionDriverStatus{
+    internal enum TweenStatus{
         NotPrepared,
         Prepared,
         Running,
@@ -65,13 +70,15 @@ namespace MS.TweenAsync{
         private List<Action> _continuations = new List<Action>();
         private short _token;
 
-        private TweenActionDriverStatus _status = TweenActionDriverStatus.NotPrepared;
+        private TweenStatus _status = TweenStatus.NotPrepared;
 
         private TweenTicker.TickAction _tickAction;
 
         private TweenOptions _tweenOptions;
 
         private bool _paused = false;
+
+        // private ManualSingal _startSingal;
 
         
         private TweenActionDriver(){
@@ -81,7 +88,7 @@ namespace MS.TweenAsync{
         }
 
         private void Prepare(TState userState,TweenOptions options,short token){
-            if(_status != TweenActionDriverStatus.NotPrepared){
+            if(_status != TweenStatus.NotPrepared){
                 throw new System.InvalidOperationException("Status error:" + _status);
             }
             _tweenOptions = options;
@@ -89,9 +96,34 @@ namespace MS.TweenAsync{
             _userState = userState;
             _paused = false;
             _token = token;
-            _status = TweenActionDriverStatus.Prepared;
+            _status = TweenStatus.Prepared;
             TweenTicker.AddTick(this._tickAction);
         }
+
+        // /// <summary>
+        // /// if current action is cancelled. task will be cancelled.
+        // /// if current action is running or succeed, task will completed immediately.
+        // /// if current action is prepared,task will be succeed when action start run, or cancelled if the action cancelled before start run.
+        // /// </summary>
+        // /// <returns></returns>
+        // public async LitTask WaitStartAsync(){
+        //     if(status == TweenStatus.NotPrepared){
+        //         throw new InvalidOperationException();
+        //     }
+        //     if(status == TweenStatus.Cancelled){
+        //         LitCancelException.Throw();
+        //         return;
+        //     }
+        //     if(status == TweenStatus.Succeed || status == TweenStatus.Running){
+        //         return;
+        //     }
+        //     //only await in prepared status
+        //     if(_startSingal == null){
+        //         _startSingal = new ManualSingal();
+        //     }
+        //     await _startSingal;
+        // }
+
 
         public float duration{
             get{
@@ -100,29 +132,35 @@ namespace MS.TweenAsync{
         }
         
         private void ChangeStatusToRunning(){
-            AssertPrepared();
-            _status = TweenActionDriverStatus.Running;
+            AssertStatus(TweenStatus.Prepared);
+            _status = TweenStatus.Running;
             TweenAction<TState>.Start(ref _userState);
+            // if(_startSingal != null){
+            //     _startSingal.SetResult();
+            // }
         }
 
         private void ReturnToPool(){
+            // if(_startSingal != null && _startSingal.awaitingCount > 0){
+            //     _startSingal.Reset();
+            // }
             _continuations.Clear();
             _token = 0;
             _pool.Push(this);
-            _status = TweenActionDriverStatus.NotPrepared;
+            _status = TweenStatus.NotPrepared;
             _userState = default(TState);
         }
 
-        private void AssertPrepared(){
-            if(_status != TweenActionDriverStatus.Prepared){
-                throw new InvalidOperationException("Prepared Status Required");
-            }           
-        }
-
         private void AssertPreparedOrRunning(){
-             if(_status != TweenActionDriverStatus.Prepared && _status != TweenActionDriverStatus.Running){
+             if(_status != TweenStatus.Prepared && _status != TweenStatus.Running){
                 throw new InvalidOperationException("Prepared or Running Status Required");
             }                  
+        }
+
+        private void AssertStatus(TweenStatus status){
+            if(_status != status){
+                throw new InvalidOperationException($"Status error. need {status}, current is {_status}");
+            }
         }
 
         private void AssertNotCompleted(){
@@ -154,7 +192,10 @@ namespace MS.TweenAsync{
         }
 
         public void RanToEnd(){
-            AssertPreparedOrRunning();
+            if(_status == TweenStatus.Prepared){
+                ChangeStatusToRunning();
+            }
+            AssertStatus(TweenStatus.Running);
             _actionState.elapsedTime = _actionState.duration;
             TweenAction<TState>.Update(_actionState,ref _userState);
             this.SucceedToEnd();
@@ -162,12 +203,15 @@ namespace MS.TweenAsync{
 
         public void Cancel(){
             AssertPreparedOrRunning();
-            _status = TweenActionDriverStatus.Cancelled;
+            _status = TweenStatus.Cancelled;
+            // if(_startSingal != null && _startSingal.awaitingCount > 0){
+            //     _startSingal.Cancel();
+            // }
             FireOnComplete();
         }
 
         public bool IsCancelled(){
-            return _status == TweenActionDriverStatus.Cancelled;
+            return _status == TweenStatus.Cancelled;
         }
 
         public void AddOnComplete(Action continuation){
@@ -177,10 +221,10 @@ namespace MS.TweenAsync{
 
         public float elapsedTime{
             set{
-                if(_status != TweenActionDriverStatus.Running && _status != TweenActionDriverStatus.Prepared){
+                if(_status != TweenStatus.Running && _status != TweenStatus.Prepared){
                     throw new InvalidOperationException("elapsedTime can only be set at running or prepared action.");
                 }
-                if(_status == TweenActionDriverStatus.Prepared){
+                if(_status == TweenStatus.Prepared){
                     ChangeStatusToRunning();
                 }
                 _actionState.elapsedTime = value;
@@ -207,7 +251,7 @@ namespace MS.TweenAsync{
 
         private void SucceedToEnd(){
             AssertPreparedOrRunning();
-            _status = TweenActionDriverStatus.Succeed;
+            _status = TweenStatus.Succeed;
             FireOnComplete();
         }
 
@@ -230,7 +274,13 @@ namespace MS.TweenAsync{
         }
 
         public bool IsCompleted(){
-            return _status == TweenActionDriverStatus.Succeed || _status == TweenActionDriverStatus.Cancelled;
+            return _status == TweenStatus.Succeed || _status == TweenStatus.Cancelled;
+        }
+
+        public TweenStatus status{
+            get{
+                return _status;
+            }
         }
     }
 }
