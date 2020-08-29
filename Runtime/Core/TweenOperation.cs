@@ -19,6 +19,12 @@ namespace MS.TweenAsync{
             _duration = actionDriver.duration;
         }
 
+        public bool isRunning{
+            get{
+                return !isCompleted && _actionDriver.status == TweenStatus.Running;
+            }
+        }
+
         public bool isInitialized{
             get{
                 return _actionDriver != null;
@@ -99,7 +105,7 @@ namespace MS.TweenAsync{
         }
 
         /// <summary>
-        /// Return awaitable Task
+        /// Return awaitable Task. Task will be done until TweenOperation completed.
         /// </summary>
         public LitTask Task{
             get{
