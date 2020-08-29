@@ -7,6 +7,7 @@ namespace MS.TweenAsync{
     using MS.Async;
     using System;
     using Async.CompilerServices;
+    using Async.Diagnostics;
 
     internal interface ITweenActionDriver{
 
@@ -49,7 +50,7 @@ namespace MS.TweenAsync{
         Cancelled,
     }
 
-    internal class TweenActionDriver<TState>:ITweenActionDriver{
+    internal class TweenActionDriver<TState>:ITweenActionDriver,ITracableObject{
 
         private static Stack<TweenActionDriver<TState>> _pool = new Stack<TweenActionDriver<TState>>();
         private static TokenAllocator _tokenAllocator = new TokenAllocator();
@@ -61,6 +62,7 @@ namespace MS.TweenAsync{
                 driver = new TweenActionDriver<TState>();
             }
             driver.Prepare(state,options,_tokenAllocator.Next());
+            Trace.TraceAllocation(driver);
             return driver;
         }
 
@@ -85,6 +87,12 @@ namespace MS.TweenAsync{
             _tickAction = (data)=>{
                 this.Tick(data);
             };
+        }
+
+        public string DebugNameId{
+            get{
+                return typeof(TState).Name;
+            }
         }
 
         private void Prepare(TState userState,TweenOptions options,short token){
@@ -149,6 +157,7 @@ namespace MS.TweenAsync{
             _pool.Push(this);
             _status = TweenStatus.NotPrepared;
             _userState = default(TState);
+            Trace.TraceReturn(this);
         }
 
         private void AssertPreparedOrRunning(){
