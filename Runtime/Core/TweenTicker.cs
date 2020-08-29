@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MS.TweenAsync{
 
-    public static class TweenTicker{
+    internal static class TweenTicker{
 
         public delegate void TickAction(TickData tickData);
 
@@ -26,11 +26,21 @@ namespace MS.TweenAsync{
             }
         }
 
+        public static int tickActionCount{
+            get{
+                return _tickActions.Count;
+            }
+        }
+
         public static void Tick(TickData tickData){
             _ticking = true;
             for(var i = 0; i < _tickActions.Count;i++){
                 var tick = _tickActions[i];
-                tick(tickData);
+                try{
+                    tick(tickData);
+                }catch(System.Exception e){
+                    Debug.LogException(e);
+                }
             }
             if(_waitingToBeRemoved.Count > 0){
                 foreach(var tick in _waitingToBeRemoved){
