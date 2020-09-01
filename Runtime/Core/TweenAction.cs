@@ -7,10 +7,8 @@ namespace MS.TweenAsync{
 
     public delegate void OnStart<TState>(ref TState state);
 
-    public delegate void OnComplete<TState>(ref TState state);
-
     public delegate void OnUpdate<TState>(ActionState actionState,ref TState state);
-
+    public delegate void OnComplete<TState>(ActionState actionState, ref TState state);
 
     public class TweenAction<TState>{
         
@@ -38,9 +36,9 @@ namespace MS.TweenAsync{
                 _onStart(ref state);
             }
         }
-        internal static void Complete(ref TState state){
+        internal static void Complete(ActionState actionState, ref TState state){
             if(_onComplete != null){
-                _onComplete(ref state);
+                _onComplete(actionState,ref state);
             }
         }
         internal static void Update(ActionState actionState,ref TState state){
@@ -48,7 +46,9 @@ namespace MS.TweenAsync{
                 _onUpdate(actionState,ref state);
             }
         }
+  
     }
+
 
     public struct ActionState{
         
@@ -62,6 +62,11 @@ namespace MS.TweenAsync{
             _duration = duration;
             this.elapsedTime = 0;
             _ease = ease;
+            this.status = TweenStatus.NotPrepared;
+        }
+
+        public TweenStatus status{
+            get;internal set;
         }
         public float duration{
             get{
@@ -88,4 +93,5 @@ namespace MS.TweenAsync{
             get;internal set;
         }
     }
+
 }

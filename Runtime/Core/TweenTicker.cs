@@ -14,11 +14,11 @@ namespace MS.TweenAsync{
 
         private static bool _ticking = false;
 
-        public static void AddTick(TickAction action){
+        internal static void AddTick(TickAction action){
             _tickActions.Add(action);
         }
 
-        public static void RemoveTick(TickAction action){
+        internal static void RemoveTick(TickAction action){
             if(_ticking){
                 _waitingToBeRemoved.Add(action);
             }else{
@@ -26,11 +26,21 @@ namespace MS.TweenAsync{
             }
         }
 
-        public static void Tick(TickData tickData){
+        public static int tickingCount{
+            get{
+                return _tickActions.Count;
+            }
+        }
+
+        internal static void Tick(TickData tickData){
             _ticking = true;
             for(var i = 0; i < _tickActions.Count;i++){
                 var tick = _tickActions[i];
-                tick(tickData);
+                try{
+                    tick(tickData);
+                }catch(System.Exception e){
+                    Debug.LogException(e);
+                }
             }
             if(_waitingToBeRemoved.Count > 0){
                 foreach(var tick in _waitingToBeRemoved){

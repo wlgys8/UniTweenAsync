@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MS.TweenAsync{
     using System;
-
+    
     public static class TweenUtility{
 
         private struct DelayState{}
@@ -13,19 +13,38 @@ namespace MS.TweenAsync{
 
         }
 
+        [System.Obsolete("Use TweenOperation.Delay instead")]
         public static TweenOperation Delay(float seconds){
-            var state = new DelayState();
-            return TweenAction<DelayState>.Prepare(state,new TweenOptions(seconds));           
+            return DelayTween(seconds);
         }
 
+        internal static TweenOperation DelayTween(float seconds){
+            var state = new DelayState();
+            return TweenAction<DelayState>.Prepare(state,new TweenOptions(seconds));            
+        }
 
+        [System.Obsolete("Use TweenOperation.Callback instead")]
         public static TweenOperation Callback<T>(Action<T> callback,T parameter){
             return CallbacksFactory<T>.Create(callback,parameter);
         }
 
+        [System.Obsolete("Use TweenOperation.Callback instead")]
         public static TweenOperation Callback(Action callback){
             return CallbacksFactory.Create(callback);
         }
+    }
+
+
+    public partial struct TweenOperation{
+        public static TweenOperation Delay(float seconds){
+            return TweenUtility.DelayTween(seconds);
+        }
+        public static TweenOperation Callback<T>(Action<T> callback,T parameter){
+            return CallbacksFactory<T>.Create(callback,parameter);
+        }
+        public static TweenOperation Callback(Action callback){
+            return CallbacksFactory.Create(callback);
+        }        
     }
 
 

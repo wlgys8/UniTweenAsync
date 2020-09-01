@@ -4,7 +4,6 @@ using UnityEngine;
 
 
 namespace MS.TweenAsync{
-    using MS.Async;
     using System;
     using Async.CompilerServices;
 
@@ -30,18 +29,26 @@ namespace MS.TweenAsync{
             get;set;
         }
 
+        bool autoRelease{
+            get;set;
+        }
+
+        void Release();
+
         bool IsCancelled();
 
         bool IsCompleted();
 
         void AddOnComplete(Action action);
 
+        void Restart();
+
         TweenStatus status{
             get;
         }
     }
 
-    internal enum TweenStatus{
+    public enum TweenStatus{
         NotPrepared,
         Prepared,
         Running,
@@ -70,8 +77,6 @@ namespace MS.TweenAsync{
         private List<Action> _continuations = new List<Action>();
         private short _token;
 
-        private TweenStatus _status = TweenStatus.NotPrepared;
-
         private TweenTicker.TickAction _tickAction;
 
         private TweenOptions _tweenOptions;
@@ -88,41 +93,19 @@ namespace MS.TweenAsync{
         }
 
         private void Prepare(TState userState,TweenOptions options,short token){
-            if(_status != TweenStatus.NotPrepared){
-                throw new System.InvalidOperationException("Status error:" + _status);
+            if(status != TweenStatus.NotPrepared){
+                throw new System.InvalidOperationException("Status error:" + this.status);
             }
             _tweenOptions = options;
             _actionState = new ActionState(options.duration,options.ease);
             _userState = userState;
             _paused = false;
             _token = token;
-            _status = TweenStatus.Prepared;
+            _actionState.status = TweenStatus.Prepared;
+            this.autoRelease = true;
             TweenTicker.AddTick(this._tickAction);
         }
 
-        // /// <summary>
-        // /// if current action is cancelled. task will be cancelled.
-        // /// if current action is running or succeed, task will completed immediately.
-        // /// if current action is prepared,task will be succeed when action start run, or cancelled if the action cancelled before start run.
-        // /// </summary>
-        // /// <returns></returns>
-        // public async LitTask WaitStartAsync(){
-        //     if(status == TweenStatus.NotPrepared){
-        //         throw new InvalidOperationException();
-        //     }
-        //     if(status == TweenStatus.Cancelled){
-        //         LitCancelException.Throw();
-        //         return;
-        //     }
-        //     if(status == TweenStatus.Succeed || status == TweenStatus.Running){
-        //         return;
-        //     }
-        //     //only await in prepared status
-        //     if(_startSingal == null){
-        //         _startSingal = new ManualSingal();
-        //     }
-        //     await _startSingal;
-        // }
 
 
         public float duration{
@@ -133,39 +116,46 @@ namespace MS.TweenAsync{
         
         private void ChangeStatusToRunning(){
             AssertStatus(TweenStatus.Prepared);
-            _status = TweenStatus.Running;
+            _actionState.status = TweenStatus.Running;
             TweenAction<TState>.Start(ref _userState);
-            // if(_startSingal != null){
-            //     _startSingal.SetResult();
-            // }
+        }
+
+        public void Restart(){
+            AssertCompleted();
+            _actionState.elapsedTime = 0;
+            _token = _tokenAllocator.Next();
+            _actionState.status = TweenStatus.Prepared;
         }
 
         private void ReturnToPool(){
-            // if(_startSingal != null && _startSingal.awaitingCount > 0){
-            //     _startSingal.Reset();
-            // }
             _continuations.Clear();
             _token = 0;
             _pool.Push(this);
-            _status = TweenStatus.NotPrepared;
+            _actionState.status = TweenStatus.NotPrepared;
             _userState = default(TState);
         }
 
         private void AssertPreparedOrRunning(){
-             if(_status != TweenStatus.Prepared && _status != TweenStatus.Running){
+             if(this.status != TweenStatus.Prepared && this.status != TweenStatus.Running){
                 throw new InvalidOperationException("Prepared or Running Status Required");
             }                  
         }
 
         private void AssertStatus(TweenStatus status){
-            if(_status != status){
-                throw new InvalidOperationException($"Status error. need {status}, current is {_status}");
+            if(this.status != status){
+                throw new InvalidOperationException($"Status error. need {status}, current is {this.status}");
             }
         }
 
         private void AssertNotCompleted(){
             if(IsCompleted()){
                 throw new InvalidOperationException("Already Completed");
+            }
+        }
+
+        private void AssertCompleted(){
+            if(!IsCompleted()){
+                throw new InvalidOperationException($"status error. Need completed, current is {this.status}");
             }
         }
 
@@ -192,7 +182,7 @@ namespace MS.TweenAsync{
         }
 
         public void RanToEnd(){
-            if(_status == TweenStatus.Prepared){
+            if(this.status == TweenStatus.Prepared){
                 ChangeStatusToRunning();
             }
             AssertStatus(TweenStatus.Running);
@@ -203,15 +193,12 @@ namespace MS.TweenAsync{
 
         public void Cancel(){
             AssertPreparedOrRunning();
-            _status = TweenStatus.Cancelled;
-            // if(_startSingal != null && _startSingal.awaitingCount > 0){
-            //     _startSingal.Cancel();
-            // }
+            _actionState.status = TweenStatus.Cancelled;
             FireOnComplete();
         }
 
         public bool IsCancelled(){
-            return _status == TweenStatus.Cancelled;
+            return this.status == TweenStatus.Cancelled;
         }
 
         public void AddOnComplete(Action continuation){
@@ -221,10 +208,10 @@ namespace MS.TweenAsync{
 
         public float elapsedTime{
             set{
-                if(_status != TweenStatus.Running && _status != TweenStatus.Prepared){
+                if(status != TweenStatus.Running && status != TweenStatus.Prepared){
                     throw new InvalidOperationException("elapsedTime can only be set at running or prepared action.");
                 }
-                if(_status == TweenStatus.Prepared){
+                if(status == TweenStatus.Prepared){
                     ChangeStatusToRunning();
                 }
                 _actionState.elapsedTime = value;
@@ -251,8 +238,27 @@ namespace MS.TweenAsync{
 
         private void SucceedToEnd(){
             AssertPreparedOrRunning();
-            _status = TweenStatus.Succeed;
+            _actionState.status = TweenStatus.Succeed;
             FireOnComplete();
+        }
+
+        /// <summary>
+        /// If AutoRelease is true, the ActionDriver will be released to pool automatically when it is go to completed.
+        /// Otherwise, you should call Release manually when dont need use it anymore.
+        /// By default, it is true.
+        /// </summary>
+        /// <value></value>
+        public bool autoRelease{
+            get;set;
+        }
+
+        /// <summary>
+        /// Release the object back to pool.
+        /// Can only be called when action completed.
+        /// </summary>
+        public void Release(){
+            AssertCompleted();
+            this.ReturnToPool();
         }
 
         private void FireOnComplete(){
@@ -260,26 +266,32 @@ namespace MS.TweenAsync{
                 TweenTicker.RemoveTick(this._tickAction);
             }
             try{
-                TweenAction<TState>.Complete(ref _userState);
+                TweenAction<TState>.Complete(this._actionState, ref _userState);
             }catch(System.Exception e){
                 Debug.LogException(e);
             }
             try{
                 foreach(var continuation in _continuations){
-                    continuation();
+                    try{
+                        continuation();
+                    }catch(System.Exception e){
+                        Debug.LogException(e);
+                    }
                 }
             }finally{
-                this.ReturnToPool();
+                if(autoRelease){
+                    this.ReturnToPool();
+                }
             }
         }
 
         public bool IsCompleted(){
-            return _status == TweenStatus.Succeed || _status == TweenStatus.Cancelled;
+            return status == TweenStatus.Succeed || status == TweenStatus.Cancelled;
         }
 
         public TweenStatus status{
             get{
-                return _status;
+                return _actionState.status;
             }
         }
     }
