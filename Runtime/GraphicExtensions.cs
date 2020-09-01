@@ -25,6 +25,7 @@ namespace MS.TweenAsync.UI{
             TweenAction<TintToState>.RegisterStart(OnTintStart);
             TweenAction<TintToState>.RegisterUpdate(OnTintUpdate);
             TweenAction<AlphaToState>.RegisterStart(OnAlphaToStart);
+            TweenAction<AlphaToState>.RegisterUpdate(OnAlphaToUpdate);
         }
 
         private static void OnTintStart(ref TintToState state){
