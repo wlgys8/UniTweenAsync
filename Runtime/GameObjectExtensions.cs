@@ -21,7 +21,6 @@ namespace MS.TweenAsync{
         static MoveExtensions(){
             TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
-            TweenAction<State>.RegisterComplete(OnComplete);
         }
 
         private static void OnStart(ref State state){
@@ -54,10 +53,6 @@ namespace MS.TweenAsync{
                 transform.position = state.options.customSpaceTransform.TransformPoint(localPosition);
                 break;
             }
-        }
-
-        private static void OnComplete(ref State state){
-
         }
 
         public static TweenOperation MoveToAsync(this Transform transform,MoveToOptions options){
@@ -115,7 +110,6 @@ namespace MS.TweenAsync{
         static ScaleExtensions(){
             TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
-            TweenAction<State>.RegisterComplete(OnComplete);           
         }
 
         private static void OnStart(ref State state){
@@ -130,9 +124,6 @@ namespace MS.TweenAsync{
             transform.localScale = localScale;
         }
 
-        private static void OnComplete(ref State state){
-
-        }
 
         public static TweenOperation ScaleToAsync(this Transform transform,ScaleToOptions options){
             var state = new State(){

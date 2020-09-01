@@ -7,7 +7,7 @@ namespace MS.TweenAsync{
     using System;
     using MS.Async.CompilerServices;
 
-    public struct TweenOperation
+    public partial struct TweenOperation
     {
         private ITweenActionDriver _actionDriver;
         private short _token;
@@ -17,6 +17,54 @@ namespace MS.TweenAsync{
             _actionDriver = actionDriver;
             _token = _actionDriver.token;
             _duration = actionDriver.duration;
+        }
+
+        /// <summary>
+        /// Restart and return a new TweenOperation.
+        /// The old operation can not be used anymore.
+        /// </summary>
+        internal TweenOperation Restart(){
+            if(_actionDriver == null){
+                return default(TweenOperation);
+            }
+            if(_actionDriver.token != _token){
+                throw new InvalidOperationException("Tween has been disposed.");
+            }
+            _actionDriver.Restart();
+            return new TweenOperation(_actionDriver);
+        }
+
+        private void AssertTokenNotExpired(){
+            if(isExpired){
+                throw new InvalidOperationException("The operation has beed disposed. You should not use it anymore.");
+            }
+        }
+
+        private bool isExpired{
+            get{
+                if(_actionDriver == null){
+                    return false;
+                }
+                return _token != _actionDriver.token;
+            }
+        }
+
+        internal bool autoRelease{
+            set{
+                if(_actionDriver == null){
+                    return;
+                }
+                AssertTokenNotExpired();
+                _actionDriver.autoRelease = value;
+            }
+        }
+
+        internal void Release(){
+            if(_actionDriver == null){
+                return;
+            }
+            AssertTokenNotExpired();
+            _actionDriver.Release();
         }
 
         public bool isRunning{
@@ -42,8 +90,14 @@ namespace MS.TweenAsync{
                 if(!isInitialized){
                     return 0;
                 }
+                if(this.isExpired){
+                    return 0;
+                }
                 return _actionDriver.elapsedTime;
-            }set{
+            }internal set{
+                if(!isInitialized || isExpired){
+                    return;
+                }
                 _actionDriver.elapsedTime = value;
             }
         }
@@ -51,7 +105,7 @@ namespace MS.TweenAsync{
         public float normalizedTime{
             get{
                 return time / duration;
-            }set{
+            }internal set{
                 this.time = duration * value;
             }
         }
@@ -62,7 +116,7 @@ namespace MS.TweenAsync{
         /// <value></value>
         public bool isCompleted{
             get{
-                return !isInitialized || _actionDriver.token != _token || _actionDriver.IsCompleted();
+                return !isInitialized || isExpired || _actionDriver.IsCompleted();
             }
         }
 
@@ -117,10 +171,6 @@ namespace MS.TweenAsync{
             }
         }
     }
-
-
-
-
 
     internal class TweenSource : ILitTaskValueSource
     {
