@@ -2,7 +2,7 @@
 
 Async Tween Function Extensions.
 
-* async/await api design
+* support async/await
 * free allocation
 * ease to extend
 
@@ -12,15 +12,86 @@ Async Tween Function Extensions.
 
 * [MSAsync - Unity Awaiters Implementation](https://github.com/wlgys8/MSAsync)
 
+# Table of Content
 
-# Standard Implementation
+- Tween Functions List
+    - Transform
+    - UI.Graphic
+    - CanvasGroup
+    - RectTransform
 
-* All async tween function will return `TweenOperation`.
-* Use `TweenOptions` to config the tween animation.
+- TweenOptions
+- TweenOperation
+- Composite Tweens
+- Callback
+- Custom Tween Functions
+- ValueToAsync
 
 
-## TweenOperation
 
+
+
+# Async Tween Functions List
+
+## Transform
+
+- `MoveToAsync`
+- `MoveByAsync`
+- `ScaleToAsync`
+- `RotateToAsync`
+
+## UI.Graphic
+
+- `TintToAsync`
+- `AlpahToAsync`
+
+## CanvasGroup
+
+- `AlphaToAsync`
+
+## RectTransform
+
+- `AnchoredPositionToAsync`
+- `SizeToAsync`
+
+
+# TweenOptions
+
+TweenOptions provide the common properties for tweens.
+
+- `duration` - how much time does the animation take. 
+- `ignoreTimeScale` should the animation affected by Time.timeScale
+- `ease` - ease function for animation. Default is Linear.
+
+```csharp
+
+void Start(){
+    gameObject.MoveToAsync(
+        new MoveToOptions(){
+            position = new Vecotor3(100,100,100),
+            //usage of tweenOptions in MoveToAsync
+            tweenOptions = new TweenOptions(){
+                duration = 0.5f,
+                ease = EaseFuncs.OutBack,
+                ignoreTimeScale = true,
+            }
+        }
+    )
+}
+
+```
+
+# TweenOperation
+
+All Async Tween Function should return `TweenOperation`, and we can use it to do somethings like below:
+
+- Read tween's status.
+- Pause/Resume the tween.
+- Cancel the tween.
+- Run the tween to the end immediately.
+- await the tween in async function.
+
+## Usage
 - `async/await`
 
 ```csharp
@@ -35,7 +106,7 @@ async void Start(){
 
 ```
 
-- `Control tween state`
+- `Control The Tween`
 
 ```csharp
 
@@ -68,62 +139,47 @@ void RanToEnd(){
 
 ```
 
-## TweenOptions
 
-- `duration` - how much time does the animation take. 
-- `ignoreTimeScale` should the animation affected by Time.timeScale
-- `ease` - ease function for animation. Default is Linear.
+
+
+
+
+# Composite Tween
+
+- TweenOperation.Sequence 
+- TweenOperation.Parallel
+- TweenOperation.Repeat
+- TweenOperation.RepeatForever
+
+
+# Callbacks
+
+- TweenOperation.Callback
 
 ```csharp
 
 void Start(){
-    gameObject.MoveToAsync(
-        new MoveToOptions(){
-            position = new Vecotor3(100,100,100),
-            tweenOptions = new TweenOptions(){
-                duration = 0.5f,
-                ease = EaseFuncs.OutBack,
-                ignoreTimeScale = true,
-            }
-        }
-    )
+    TweenOperation.Sequence(
+        TweenOperation.Callback(()=>{
+            //called before move start
+        }),
+        gameObject.MoveToAsync(....),
+
+        TweenOperation.Callback(()=>{
+            //called after move finished
+        }),
+    );
 }
 
 ```
 
-# Async Tween Functions List
+# Custom Tween Functions
 
-## Transform
-
-- `MoveToAsync`
-- `MoveByAsync`
-- `ScaleToAsync`
-- `RotateToAsync`
-
-## UI.Graphic
-
-- `TintToAsync`
-- `AlpahToAsync`
-
-## CanvasGroup
-
-- `AlphaToAsync`
-
-## RectTransform
-
-- `AnchoredPositionToAsync`
-- `SizeToAsync`
-
-
-# TweenComposite
-
-- TweenComposite.Sequence
-- TweenComposite.Parallel
-
+To be written
 
 # ValueToAsync
 
-TweenAsync support run custom interpolation function between two State.
+TweenAsync support run custom interpolation function between two state.
 
 ```csharp
 
