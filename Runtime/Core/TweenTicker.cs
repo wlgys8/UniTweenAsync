@@ -32,6 +32,11 @@ namespace MS.TweenAsync{
             }
         }
 
+        internal static void Clear(){
+            _tickActions.Clear();
+            _waitingToBeRemoved.Clear();
+        }
+
         internal static void Tick(TickData tickData){
             _ticking = true;
             for(var i = 0; i < _tickActions.Count;i++){
@@ -89,6 +94,10 @@ namespace MS.TweenAsync{
         private void Update(){
             var data = new TweenTicker.TickData(Time.unscaledDeltaTime,Time.timeScale);
             TweenTicker.Tick(data);
+        }
+
+        void OnApplicationQuit(){
+            TweenTicker.Clear();
         }
 
 
