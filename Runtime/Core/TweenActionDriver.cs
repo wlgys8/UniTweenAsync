@@ -67,6 +67,7 @@ namespace MS.TweenAsync{
                 driver = _pool.Pop();
             }else{
                 driver = new TweenActionDriver<TState>();
+                Profiler.TweenProfiler.TraceAllocateActionDriver();
             }
             driver.Prepare(state,options,_tokenAllocator.Next());
             Trace.TraceAllocation(driver);
@@ -136,6 +137,7 @@ namespace MS.TweenAsync{
         }
 
         private void ReturnToPool(){
+            TweenAction<TState>.PreRelease(_actionState,ref _userState);
             _continuations.Clear();
             _token = 0;
             _pool.Push(this);
@@ -218,7 +220,7 @@ namespace MS.TweenAsync{
         public float elapsedTime{
             set{
                 if(status != TweenStatus.Running && status != TweenStatus.Prepared){
-                    throw new InvalidOperationException("elapsedTime can only be set at running or prepared action.");
+                    throw new InvalidOperationException($"elapsedTime can only be set at running or prepared action. curret status is {this.status}");
                 }
                 if(status == TweenStatus.Prepared){
                     ChangeStatusToRunning();

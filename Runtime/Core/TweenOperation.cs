@@ -111,9 +111,10 @@ namespace MS.TweenAsync{
         }
 
         /// <summary>
-        /// if Tween is completed, it's token will changed.
+        /// Check if Tween is completed. <br/>
+        /// A default(TweenOperation) is always completed.<br/>
+        /// A released operation is also completed.
         /// </summary>
-        /// <value></value>
         public bool isCompleted{
             get{
                 return !isInitialized || isExpired || _actionDriver.IsCompleted();

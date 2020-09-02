@@ -1,10 +1,12 @@
 {
-    "name": "MS.TweenAsync",
+    "name": "MS.TweenAsync.Editor",
     "references": [
-        "MS.LitTask"
+        "MS.TweenAsync"
     ],
     "optionalUnityReferences": [],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

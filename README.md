@@ -2,15 +2,14 @@
 
 Async Tween Function Extensions.
 
-* support async/await
 * free allocation
+* support async/await
 * ease to extend
+* support run in editor mode
 
 # Dependencies
 
 * [LitTask - Free Allocation Task-Like Implementation](https://github.com/wlgys8/LitTask)
-
-* [MSAsync - Unity Awaiters Implementation](https://github.com/wlgys8/MSAsync)
 
 # Table of Content
 

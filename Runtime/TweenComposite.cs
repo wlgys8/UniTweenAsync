@@ -16,10 +16,16 @@ namespace MS.TweenAsync{
             TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
             TweenAction<State>.RegisterComplete(OnComplete);
+            TweenAction<State>.RegisterPreRelease(OnPreRelease);
         }
 
         private static void OnStart(ref State state){
-
+            for(var i = 0; i < state.operations.Count;i++){
+                var op = state.operations[i];
+                if(op.isInitialized && op.isCompleted){
+                    state.operations[i] = op.Restart();
+                }
+            }
         }
 
         private static void OnUpdate(ActionState actionState, ref State state){
@@ -59,6 +65,12 @@ namespace MS.TweenAsync{
             }
         }
 
+        private static void OnPreRelease(ActionState actionState, ref State state){
+            foreach(var op in state.operations){
+                op.Release();
+            }
+        }
+
         public static TweenOperation Composite(params TweenOperation[] operations){
             return Composite(new List<TweenOperation>(operations));
         }
@@ -69,6 +81,7 @@ namespace MS.TweenAsync{
                 var op = operations[i];
                 duration += op.duration;
                 op.paused = true;
+                op.autoRelease = false;
             }
             if(duration < 0){
                 throw new System.InvalidOperationException("duration of tweens out of bounds");
@@ -91,10 +104,16 @@ namespace MS.TweenAsync{
             TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
             TweenAction<State>.RegisterComplete(OnComplete);
+            TweenAction<State>.RegisterPreRelease(OnPreRelease);
         }
 
         private static void OnStart(ref State state){
-
+            for(var i = 0; i < state.operations.Count;i++){
+                var op = state.operations[i];
+                if(op.isInitialized && op.isCompleted){
+                    state.operations[i] = op.Restart();
+                }
+            }           
         }
 
         private static void OnUpdate(ActionState actionState, ref State state){
@@ -126,6 +145,12 @@ namespace MS.TweenAsync{
             }
         }
 
+        private static void OnPreRelease(ActionState actionState, ref State state){
+            foreach(var op in state.operations){
+                op.Release();
+            }
+        }
+
         public static TweenOperation Composite(params TweenOperation[] operations){
             return Composite(new List<TweenOperation>(operations));
         }
@@ -136,6 +161,7 @@ namespace MS.TweenAsync{
                 var op = operations[i];
                 duration = Mathf.Max(duration,op.duration);
                 op.paused = true;
+                op.autoRelease = false;
             }
             var state = new State(){
                 operations = operations
@@ -159,10 +185,14 @@ namespace MS.TweenAsync{
             TweenAction<State>.RegisterStart(OnStart);
             TweenAction<State>.RegisterUpdate(OnUpdate);
             TweenAction<State>.RegisterComplete(OnCompleted);
+            TweenAction<State>.RegisterPreRelease(OnPreRelease);
         }
 
         private static void OnStart(ref State state){
             state.repeatIndex = 0;
+            if(state.source.isInitialized && state.source.isCompleted){
+                state.source = state.source.Restart();
+            }
         }
 
         private static void OnUpdate(ActionState actionState,ref State state){
@@ -189,8 +219,12 @@ namespace MS.TweenAsync{
                     Debug.LogWarningFormat("Unexpected tween status:{0}",actionState.status);
                 }
             }
+        }
+
+        private static void OnPreRelease(ActionState actionState,ref State state){
             state.source.Release();
         }
+
 
         
         public static TweenOperation Create(TweenOperation source,int repeatCount){
@@ -213,11 +247,17 @@ namespace MS.TweenAsync{
         }
 
         static TweenRepeatForever(){
-
+            TweenAction<State>.RegisterStart(OnStart);
+            TweenAction<State>.RegisterUpdate(OnUpdate);
+            TweenAction<State>.RegisterComplete(OnCompleted);
+            TweenAction<State>.RegisterPreRelease(OnPreRelease);
         }
 
         private static void OnStart(ref State state){
-
+            state.repeatIndex = 0;
+            if(state.operation.isInitialized && state.operation.isCompleted){
+                state.operation = state.operation.Restart();
+            }
         }
 
         private static void OnUpdate(ActionState actionState,ref State state){
@@ -229,7 +269,7 @@ namespace MS.TweenAsync{
             var overflowSeconds = actionState.elapsedTime - state.repeatIndex * state.operation.duration;
             var overflowRepeat = Mathf.FloorToInt(overflowSeconds / state.operation.duration);
             var extraSeconds = overflowSeconds % state.operation.duration;
-            state.repeatIndex = Mathf.Clamp(overflowRepeat,0,int.MaxValue);
+            state.repeatIndex = Mathf.Clamp(state.repeatIndex + overflowRepeat,0,int.MaxValue);
             state.operation = state.operation.Restart();
             state.operation.time = extraSeconds;
         }
@@ -244,6 +284,9 @@ namespace MS.TweenAsync{
                     Debug.LogWarningFormat("Unexpected tween status:{0}",actionState.status);
                 }
             }
+        }
+
+        private static void OnPreRelease(ActionState actionState,ref State state){
             state.operation.Release();
         }
 
@@ -278,11 +321,11 @@ namespace MS.TweenAsync{
             return TweenParallel.Composite(operations);
         }
 
-        public static TweenOperation Repeat(TweenOperation operation,int repeatCount){
+        public static TweenOperation Repeat(this TweenOperation operation,int repeatCount){
             return TweenRepeat.Create(operation,repeatCount);
         }
 
-        public static TweenOperation RepeatForever(TweenOperation operation){
+        public static TweenOperation RepeatForever(this TweenOperation operation){
             return TweenRepeatForever.Create(operation);
         }
 
@@ -333,4 +376,6 @@ namespace MS.TweenAsync{
             return TweenRepeatForever.Create(operation);
         }
     }
+
+
 }

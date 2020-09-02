@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MS.TweenAsync{
 
-    internal static class TweenTicker{
+    public static class TweenTicker{
 
         public delegate void TickAction(TickData tickData);
 
@@ -97,5 +97,28 @@ namespace MS.TweenAsync{
             var b = new GameObject("TweenTickBehaviour").AddComponent<TweenTickBehaviour>();
             GameObject.DontDestroyOnLoad(b.gameObject);
         }
+
+#if UNITY_EDITOR
+
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void EditorOnLoadMethond(){
+            UnityEditor.EditorApplication.update += OnEditorUpdate;
+            _lastEditorUpdateTime = UnityEditor.EditorApplication.timeSinceStartup;
+        }
+
+        private static double _lastEditorUpdateTime;
+
+        private static void OnEditorUpdate(){
+            //only work when Application is not playing.
+            if(Application.isPlaying){
+                return;
+            }
+            var deltaTime = UnityEditor.EditorApplication.timeSinceStartup - _lastEditorUpdateTime;
+            _lastEditorUpdateTime = UnityEditor.EditorApplication.timeSinceStartup;
+            var data = new TweenTicker.TickData((float)deltaTime,Time.timeScale);
+            TweenTicker.Tick(data);
+        }
     }
+
+#endif
 }

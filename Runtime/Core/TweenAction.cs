@@ -10,11 +10,15 @@ namespace MS.TweenAsync{
     public delegate void OnUpdate<TState>(ActionState actionState,ref TState state);
     public delegate void OnComplete<TState>(ActionState actionState, ref TState state);
 
+    public delegate void OnPreRelease<TState>(ActionState actionState,ref TState state);
+
     public class TweenAction<TState>{
         
         private static OnStart<TState> _onStart;
         private static OnComplete<TState> _onComplete;
         private static OnUpdate<TState> _onUpdate;
+
+        private static OnPreRelease<TState> _onPreRelease;
 
         public static void RegisterStart(OnStart<TState> onStart){
             _onStart = onStart;
@@ -24,6 +28,10 @@ namespace MS.TweenAsync{
         }
         public static void RegisterUpdate(OnUpdate<TState> onUpdate){
             _onUpdate = onUpdate;
+        }
+
+        public static void RegisterPreRelease(OnPreRelease<TState> onPreRelease){
+            _onPreRelease = onPreRelease;
         }
 
         public static TweenOperation Prepare(TState state,TweenOptions options){
@@ -44,6 +52,12 @@ namespace MS.TweenAsync{
         internal static void Update(ActionState actionState,ref TState state){
             if(_onUpdate != null){
                 _onUpdate(actionState,ref state);
+            }
+        }
+
+        internal static void PreRelease(ActionState actionState, ref TState state){
+            if(_onPreRelease != null){
+                _onPreRelease(actionState,ref state);
             }
         }
   
