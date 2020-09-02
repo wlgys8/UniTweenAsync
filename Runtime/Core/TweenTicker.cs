@@ -127,7 +127,7 @@ namespace MS.TweenAsync{
             var data = new TweenTicker.TickData((float)deltaTime,Time.timeScale);
             TweenTicker.Tick(data);
         }
-    }
-
 #endif
+
+    }
 }
