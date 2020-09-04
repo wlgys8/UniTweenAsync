@@ -15,15 +15,21 @@ namespace MS.TweenAsync{
         private static bool _ticking = false;
 
         internal static void AddTick(TickAction action){
-            _tickActions.Add(action);
+            if(_waitingToBeRemoved.Contains(action)){
+                _waitingToBeRemoved.Remove(action);
+            }else{
+                _tickActions.Add(action);
+            }
         }
 
-        internal static void RemoveTick(TickAction action){
+        internal static bool RemoveTick(TickAction action){
+            var res = _tickActions.Contains(action);
             if(_ticking){
                 _waitingToBeRemoved.Add(action);
             }else{
                 _tickActions.Remove(action);
             }
+            return res;
         }
 
         public static int tickingCount{
@@ -47,13 +53,16 @@ namespace MS.TweenAsync{
                     Debug.LogException(e);
                 }
             }
+            _ticking = false;
             if(_waitingToBeRemoved.Count > 0){
                 foreach(var tick in _waitingToBeRemoved){
-                    _tickActions.Remove(tick);
+                    if(!_tickActions.Remove(tick)){
+                        Debug.LogError("failed to remove action from ticker");
+                    }
                 }
                 _waitingToBeRemoved.Clear();
             }
-            _ticking = false;
+            
         }
 
 

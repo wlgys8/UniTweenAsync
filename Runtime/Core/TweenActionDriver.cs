@@ -86,6 +86,8 @@ namespace MS.TweenAsync{
 
         private bool _paused = false;
 
+        private bool _isTickRegistered = false;
+
         // private ManualSingal _startSingal;
 
         
@@ -101,6 +103,7 @@ namespace MS.TweenAsync{
             }
         }
 
+
         private void Prepare(TState userState,TweenOptions options,short token){
             if(status != TweenStatus.NotPrepared){
                 throw new System.InvalidOperationException("Status error:" + this.status);
@@ -112,7 +115,23 @@ namespace MS.TweenAsync{
             _token = token;
             _actionState.status = TweenStatus.Prepared;
             this.autoRelease = true;
+            this.RegisterTick();
+        }
+
+        private void RegisterTick(){
+            if(_isTickRegistered){
+                return;
+            }
+            _isTickRegistered = true;
             TweenTicker.AddTick(this._tickAction);
+        }
+
+        private void UnregisterTick(){
+            if(!_isTickRegistered){
+                return;
+            }
+            _isTickRegistered = false;
+            TweenTicker.RemoveTick(this._tickAction);
         }
 
 
@@ -138,6 +157,7 @@ namespace MS.TweenAsync{
 
         private void ReturnToPool(){
             TweenAction<TState>.PreRelease(_actionState,ref _userState);
+            UnregisterTick();
             _continuations.Clear();
             _token = 0;
             _pool.Push(this);
@@ -148,10 +168,15 @@ namespace MS.TweenAsync{
 
         private void AssertPreparedOrRunning(){
              if(this.status != TweenStatus.Prepared && this.status != TweenStatus.Running){
-                throw new InvalidOperationException("Prepared or Running Status Required");
+                throw new InvalidOperationException($"Prepared or Running Status Required, current is {this.status}");
             }                  
         }
 
+        private void AssertNotStatus(TweenStatus status){
+            if(this.status == status){
+                throw new InvalidOperationException($"Status error. can not be {status}");
+            }
+        }
         private void AssertStatus(TweenStatus status){
             if(this.status != status){
                 throw new InvalidOperationException($"Status error. need {status}, current is {this.status}");
@@ -183,11 +208,12 @@ namespace MS.TweenAsync{
                 if(_paused == value){
                     return;
                 }
+                AssertNotStatus(TweenStatus.NotPrepared);
                 _paused = value;
                 if(value){
-                    TweenTicker.RemoveTick(this._tickAction);
+                    UnregisterTick();
                 }else{
-                    TweenTicker.AddTick(this._tickAction);
+                    RegisterTick();
                 }
             }
         }
@@ -213,6 +239,7 @@ namespace MS.TweenAsync{
         }
 
         public void AddOnComplete(Action continuation){
+            AssertNotStatus(TweenStatus.NotPrepared);
             AssertNotCompleted();
             _continuations.Add(continuation);
         }
@@ -273,9 +300,7 @@ namespace MS.TweenAsync{
         }
 
         private void FireOnComplete(){
-            if(!this.paused){
-                TweenTicker.RemoveTick(this._tickAction);
-            }
+            UnregisterTick();
             try{
                 TweenAction<TState>.Complete(this._actionState, ref _userState);
             }catch(System.Exception e){
