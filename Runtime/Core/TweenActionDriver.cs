@@ -253,14 +253,19 @@ namespace MS.TweenAsync{
                     ChangeStatusToRunning();
                 }
                 _actionState.elapsedTime = value;
-                TweenAction<TState>.Update(_actionState,ref _userState);
-                if(_actionState.elapsedTime >= _actionState.duration){
-                    this.SucceedToEnd();
+                try{
+                    TweenAction<TState>.Update(_actionState,ref _userState);
+                    if(_actionState.elapsedTime >= _actionState.duration){
+                        this.SucceedToEnd();
+                    }
+                }catch(System.Exception e){
+                    Debug.LogException(e);
+                    this.Cancel();
                 }
             }get{
                 return _actionState.elapsedTime;
             }
-        }
+        } 
 
         public void Tick(TweenTicker.TickData data){
             AssertPreparedOrRunning();

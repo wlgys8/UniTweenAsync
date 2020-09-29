@@ -12,6 +12,13 @@ namespace MS.TweenAsync{
 
     public delegate void OnPreRelease<TState>(ActionState actionState,ref TState state);
 
+    /// <summary>
+    /// <para>TweenAction依次处理如下的事件: </para>
+    /// <para> OnStart 动画启始时调用 </para>
+    /// <para> OnUpdate 动画更新调用 </para>
+    /// <para> OnComplete 动画结束调用 </para>
+    /// <para> OnPreRelease 动画释放调用 </para>
+    /// </summary>
     public class TweenAction<TState>{
         
         private static OnStart<TState> _onStart;
