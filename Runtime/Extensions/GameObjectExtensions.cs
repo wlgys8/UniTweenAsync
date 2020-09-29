@@ -99,82 +99,21 @@ namespace MS.TweenAsync{
 
 
     public static class ScaleExtensions{
-
-        private struct State{
-            public Vector3 fromScale;
-            public Vector3 toScale;
-            public ScaleToOptions options;
-            public Transform target;           
-        }
-
-        static ScaleExtensions(){
-            TweenAction<State>.RegisterStart(OnStart);
-            TweenAction<State>.RegisterUpdate(OnUpdate);
-        }
-
-        private static void OnStart(ref State state){
-            var options = state.options;
-            var transform = state.target;
-            state.fromScale = transform.localScale;
-        }
-
-        private static void OnUpdate(ActionState actionState, ref State state){
-            var transform = state.target;
-            var localScale = Vector3.LerpUnclamped(state.fromScale,state.toScale,actionState.interpolatedTime);
-            transform.localScale = localScale;
-        }
-
-
-        public static TweenOperation ScaleToAsync(this Transform transform,ScaleToOptions options){
-            var state = new State(){
-                toScale = options.scale,
-                options = options,
-                target = transform,
-            };
-            return TweenAction<State>.Prepare(state,options.tweenOptions);
-        }
-
         public static TweenOperation ScaleToAsync(this GameObject gameObject,ScaleToOptions options){
-            return gameObject.transform.ScaleToAsync(options);
+            return new To<Vector3>(options.scale).Property(gameObject.transform,Properties.transform.localScale,options.tweenOptions);
         }
     }
 
 
     public static class RotateExtensions{
-
-        private struct State{
-            public Transform target;
-            public Vector3 fromAngles;
-            public Vector3 toAngles;   
-            public RotateToOptions options;         
-        }
-
-        static RotateExtensions(){
-            TweenAction<State>.RegisterStart(OnStart);
-            TweenAction<State>.RegisterUpdate(OnUpdate);
-        }
-
-        private static void OnStart(ref State state){
-            state.fromAngles = state.target.localEulerAngles;
-            state.toAngles = state.options.eulerAngles;
-        }
-
-        private static void OnUpdate(ActionState actionState,ref State state){
-            var angles = Vector3.LerpUnclamped(state.fromAngles,state.toAngles,actionState.interpolatedTime);
-            state.target.localEulerAngles = angles;
-        }
-
-
         public static TweenOperation RotateToAsync(this Transform transform,RotateToOptions options){
-            var state = new State(){
-                options = options,
-                target = transform,
-            };
-            return TweenAction<State>.Prepare(state,options.tweenOptions);
+            return new To<Vector3>(options.eulerAngles).Property(transform,
+            Properties.transform.localEulerAngles,
+            options.tweenOptions);
         }
 
         public static TweenOperation RotateToAsync(this GameObject gameObject,RotateToOptions options){
-            return gameObject.transform.RotateToAsync(options);
+            return RotateToAsync(gameObject.transform,options);
         }
     }
 
