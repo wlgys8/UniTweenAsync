@@ -10,26 +10,27 @@ namespace MS.TweenAsync{
 
         private static List<TickAction> _tickActions = new List<TickAction>();
 
-        private static HashSet<TickAction> _waitingToBeRemoved = new HashSet<TickAction>();
-
         private static bool _ticking = false;
 
+        private static int _tickingIndex = -1;
+
         internal static void AddTick(TickAction action){
-            if(_waitingToBeRemoved.Contains(action)){
-                _waitingToBeRemoved.Remove(action);
-            }else{
-                _tickActions.Add(action);
-            }
+            _tickActions.Add(action);
         }
 
         internal static bool RemoveTick(TickAction action){
-            var res = _tickActions.Contains(action);
             if(_ticking){
-                _waitingToBeRemoved.Add(action);
+                var index = _tickActions.IndexOf(action);
+                if(index < 0){
+                    return false;
+                }
+                if(index <= _tickingIndex){
+                    _tickingIndex --;
+                }
+                return _tickActions.Remove(action);
             }else{
-                _tickActions.Remove(action);
+                return _tickActions.Remove(action);
             }
-            return res;
         }
 
         public static int tickingCount{
@@ -40,28 +41,21 @@ namespace MS.TweenAsync{
 
         internal static void Clear(){
             _tickActions.Clear();
-            _waitingToBeRemoved.Clear();
         }
 
         internal static void Tick(TickData tickData){
             _ticking = true;
-            for(var i = 0; i < _tickActions.Count;i++){
-                var tick = _tickActions[i];
+            _tickingIndex = 0;
+            while(_tickingIndex < _tickActions.Count){
+                var tick = _tickActions[_tickingIndex];
                 try{
                     tick(tickData);
                 }catch(System.Exception e){
                     Debug.LogException(e);
                 }
+                _tickingIndex ++;
             }
             _ticking = false;
-            if(_waitingToBeRemoved.Count > 0){
-                foreach(var tick in _waitingToBeRemoved){
-                    if(!_tickActions.Remove(tick)){
-                        Debug.LogError("failed to remove action from ticker");
-                    }
-                }
-                _waitingToBeRemoved.Clear();
-            }
             
         }
 
