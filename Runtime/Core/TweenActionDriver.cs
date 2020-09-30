@@ -150,12 +150,16 @@ namespace MS.TweenAsync{
 
         public void Restart(){
             AssertCompleted();
+            if(autoRelease){
+               throw new System.InvalidOperationException("autoRelease mode tween can not be restarted"); 
+            }
             _actionState.elapsedTime = 0;
             _token = _tokenAllocator.Next();
             _actionState.status = TweenStatus.Prepared;
         }
 
         private void ReturnToPool(){
+            AssertCompleted();
             TweenAction<TState>.PreRelease(_actionState,ref _userState);
             UnregisterTick();
             _continuations.Clear();
@@ -300,7 +304,6 @@ namespace MS.TweenAsync{
         /// Can only be called when action completed.
         /// </summary>
         public void Release(){
-            AssertCompleted();
             this.ReturnToPool();
         }
 

@@ -7,7 +7,7 @@
   "type": "library",
   "unity": "2018.3",
   "dependencies": {
-    "com.ms.litask":"https://github.com/wlgys8/LitTask.git",
-    "com.ms.async":"https://github.com/wlgys8/MSAsync.git"
+    "com.ms.litask":"2.0.0",
+    "com.ms.pool":"0.0.1"
   }
 }
