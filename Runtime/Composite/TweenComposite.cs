@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace MS.TweenAsync{
-
+    using CommonUtils;
 
 
     internal static class TweenSequence{
@@ -69,13 +69,49 @@ namespace MS.TweenAsync{
             foreach(var op in state.operations){
                 op.Release();
             }
+            ListPool<TweenOperation>.Release(state.operations);
         }
 
         public static TweenOperation Composite(params TweenOperation[] operations){
-            return Composite(new List<TweenOperation>(operations));
+            var pOperations = ListPool<TweenOperation>.Request();
+            pOperations.AddRange(operations);
+            return CompositeInternal(pOperations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            return CompositeInternal(operations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2,TweenOperation p3){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            operations.Add(p3);
+            return CompositeInternal(operations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2,TweenOperation p3,TweenOperation p4){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            operations.Add(p3);
+            operations.Add(p4);
+            return CompositeInternal(operations);
         }
 
         public static TweenOperation Composite(List<TweenOperation> operations){
+            var pOperations = ListPool<TweenOperation>.Request();
+            pOperations.AddRange(operations);
+            return CompositeInternal(pOperations);
+        }
+
+        /// <summary>
+        /// operations必须是从pool中取的
+        /// </summary>
+        private static TweenOperation CompositeInternal(List<TweenOperation> operations){
             var duration = 0f;
             for(var i = 0; i < operations.Count;i++){
                 var op = operations[i];
@@ -149,13 +185,43 @@ namespace MS.TweenAsync{
             foreach(var op in state.operations){
                 op.Release();
             }
+            ListPool<TweenOperation>.Release(state.operations);
         }
 
         public static TweenOperation Composite(params TweenOperation[] operations){
-            return Composite(new List<TweenOperation>(operations));
+            return CompositeInternal(ListPool<TweenOperation>.RequestAndFill(operations));
         }
 
         public static TweenOperation Composite(List<TweenOperation> operations){
+            operations = ListPool<TweenOperation>.RequestAndFill(operations);
+            return CompositeInternal(operations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            return CompositeInternal(operations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2,TweenOperation p3){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            operations.Add(p3);
+            return CompositeInternal(operations);
+        }
+
+        public static TweenOperation Composite(TweenOperation p1,TweenOperation p2,TweenOperation p3,TweenOperation p4){
+            var operations = ListPool<TweenOperation>.Request();
+            operations.Add(p1);
+            operations.Add(p2);
+            operations.Add(p3);
+            operations.Add(p4);
+            return CompositeInternal(operations);
+        }
+
+        private static TweenOperation CompositeInternal(List<TweenOperation> operations){
             var duration = 0f;
             for(var i = 0; i < operations.Count;i++){
                 var op = operations[i];
@@ -348,6 +414,18 @@ namespace MS.TweenAsync{
             return TweenSequence.Composite(operations);
         }
 
+        public static TweenOperation Sequence(TweenOperation p1,TweenOperation p2){
+            return TweenSequence.Composite(p1,p2);
+        }
+
+        public static TweenOperation Sequence(TweenOperation p1,TweenOperation p2,TweenOperation p3){
+            return TweenSequence.Composite(p1,p2,p3);
+        }
+
+        public static TweenOperation Sequence(TweenOperation p1,TweenOperation p2,TweenOperation p3,TweenOperation p4){
+            return TweenSequence.Composite(p1,p2,p3,p4);
+        }
+
         /// <summary>
         /// Run tweens parallel
         /// </summary>
@@ -360,6 +438,18 @@ namespace MS.TweenAsync{
         /// </summary>
         public static TweenOperation Parallel(List<TweenOperation> operations){
             return TweenParallel.Composite(operations);
+        }
+
+        public static TweenOperation Parallel(TweenOperation p1,TweenOperation p2){
+            return TweenParallel.Composite(p1,p2);
+        }
+
+        public static TweenOperation Parallel(TweenOperation p1,TweenOperation p2,TweenOperation p3){
+            return TweenParallel.Composite(p1,p2,p3);
+        }
+
+        public static TweenOperation Parallel(TweenOperation p1,TweenOperation p2,TweenOperation p3,TweenOperation p4){
+            return TweenParallel.Composite(p1,p2,p3,p4);
         }
 
         /// <summary>

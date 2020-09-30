@@ -1,7 +1,8 @@
 {
     "name": "MS.TweenAsync",
     "references": [
-        "MS.LitTask"
+        "MS.LitTask",
+        "MS.CommonUtils.Pool"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [],
