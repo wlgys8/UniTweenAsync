@@ -179,6 +179,11 @@ namespace MS.TweenAsync{
             });
         }
 
+        /// <summary>
+        /// do nothing, only for cctor be called
+        /// </summary>
+        public static void RegisterBuiltin(){}
+
         internal static void AssertSupport<T>(){
             if(!ValueUtility<T>.isSupportLerp){
                 throw new NotImplementedException("not support ValueTween for type:" + typeof(T));
