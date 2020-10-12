@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 namespace MS.TweenAsync{
     using System;
     using Async.CompilerServices;
     using Async.Diagnostics;
+    using MS.CommonUtils;
 
     internal interface ITweenActionDriver{
 
@@ -59,16 +59,10 @@ namespace MS.TweenAsync{
 
     internal class TweenActionDriver<TState>:ITweenActionDriver,ITracableObject{
 
-        private static Stack<TweenActionDriver<TState>> _pool = new Stack<TweenActionDriver<TState>>();
+        private static AutoAllocatePool<TweenActionDriver<TState>> _pool = new AutoAllocatePool<TweenActionDriver<TState>>();
         private static TokenAllocator _tokenAllocator = new TokenAllocator();
         public static TweenActionDriver<TState> Prepare(TState state, TweenOptions options){
-            TweenActionDriver<TState> driver = null;
-            if(_pool.Count > 0){
-                driver = _pool.Pop();
-            }else{
-                driver = new TweenActionDriver<TState>();
-                Profiler.TweenProfiler.TraceAllocateActionDriver();
-            }
+            TweenActionDriver<TState> driver = _pool.Request();
             driver.Prepare(state,options,_tokenAllocator.Next());
             Trace.TraceAllocation(driver);
             return driver;
@@ -91,7 +85,7 @@ namespace MS.TweenAsync{
         // private ManualSingal _startSingal;
 
         
-        private TweenActionDriver(){
+        public TweenActionDriver(){
             _tickAction = (data)=>{
                 this.Tick(data);
             };
@@ -164,7 +158,7 @@ namespace MS.TweenAsync{
             UnregisterTick();
             _continuations.Clear();
             _token = 0;
-            _pool.Push(this);
+            _pool.Release(this);
             _actionState.status = TweenStatus.NotPrepared;
             _userState = default(TState);
             Trace.TraceReturn(this);
