@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MS.Async;
 
 namespace MS.TweenAsync{
     internal class TweenBehaviourBinding:MonoBehaviour
@@ -11,15 +12,18 @@ namespace MS.TweenAsync{
 
         private bool _processingEnable = false;
         private bool _processingDisable = false;
+
+        private int _lastRemoveCheckFrame = 0;
         
         public void Bind(TweenOperation operation,BehaviourBindSetting setting){
+            RemoveAllCompletedOperations();
             if(setting.behaviourOnEnable != BehaviourType.None){
                 var item = new OperationItem(){
                     behaviour = setting.behaviourOnEnable,
                     operation = operation
                 };
                 if(_processingEnable){
-                    _enableBehaviours.Add(item);
+                    AddItemToList(ref item,_enableBehaviours);
                 }else{
                     var completed = false;
                     if(this.isActiveAndEnabled){
@@ -27,7 +31,7 @@ namespace MS.TweenAsync{
                         completed = ProcessOperationItem(ref item);
                     }
                     if(!completed){
-                        _enableBehaviours.Add(item);
+                        AddItemToList(ref item,_enableBehaviours);
                     }
                 }
             }
@@ -38,7 +42,7 @@ namespace MS.TweenAsync{
                     operation = operation
                 };
                 if(_processingDisable){
-                    _disableBehaviours.Add(item);
+                    AddItemToList(ref item,_disableBehaviours);
                 }else{
                     var completed = false;
                     if(!this.isActiveAndEnabled){
@@ -46,7 +50,7 @@ namespace MS.TweenAsync{
                         completed = ProcessOperationItem(ref item);
                     }
                     if(!completed){
-                        _disableBehaviours.Add(item);
+                        AddItemToList(ref item,_disableBehaviours);
                     }
                 }
             }
@@ -60,9 +64,34 @@ namespace MS.TweenAsync{
                     //already destroyed
                     ProcessOperationItem(ref item);
                 }else{
-                    _destroyBehaviours.Add(item);
+                    AddItemToList(ref item,_destroyBehaviours);
                 }
             }
+        }
+
+        /// <summary>
+        /// 移除所有已经为完成状态的operations
+        /// </summary>
+        private void RemoveAllCompletedOperations(){
+            if(_lastRemoveCheckFrame != Time.frameCount){
+                _lastRemoveCheckFrame = Time.frameCount;
+                RemoveCompletedOperationsInList(_enableBehaviours);
+                RemoveCompletedOperationsInList(_disableBehaviours);
+                RemoveCompletedOperationsInList(_destroyBehaviours);
+            }
+        }
+
+        private void RemoveCompletedOperationsInList(List<OperationItem> list){
+            for(var i = list.Count - 1; i >= 0;i --){
+                var item = list[i];
+                if(item.operation.isCompleted){
+                    list.RemoveAt(i);
+                }
+            }
+        }
+
+        private void AddItemToList(ref OperationItem item,List<OperationItem> list){
+            list.Add(item);
         }
 
         private bool ProcessOperationItem(ref OperationItem item){
@@ -92,7 +121,7 @@ namespace MS.TweenAsync{
                 var item = items[index];
                 bool shouldRemove = ProcessOperationItem(ref item);
                 if(shouldRemove){
-                    items.Remove(item);
+                    items.RemoveAt(index);
                 }else{
                     index ++;
                 }
