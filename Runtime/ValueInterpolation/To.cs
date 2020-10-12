@@ -66,7 +66,7 @@ namespace MS.TweenAsync{
         }
 
         private static class PropertyController<TObject>{
-            private class State{
+            private struct State{
 
                 public TValue from;
                 public TValue to;

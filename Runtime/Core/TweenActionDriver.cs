@@ -166,7 +166,7 @@ namespace MS.TweenAsync{
 
         private void AssertPreparedOrRunning(){
              if(this.status != TweenStatus.Prepared && this.status != TweenStatus.Running){
-                throw new InvalidOperationException($"Prepared or Running Status Required, current is {this.status}");
+                throw new InvalidOperationException($"Prepared or Running Status Required, current is {this.status},hashCode = {this.GetHashCode()}");
             }                  
         }
 
