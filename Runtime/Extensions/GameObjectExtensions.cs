@@ -100,8 +100,16 @@ namespace MS.TweenAsync{
 
     public static class ScaleExtensions{
         public static TweenOperation ScaleToAsync(this GameObject gameObject,ScaleToOptions options){
-            return new To<Vector3>(options.scale).Property(gameObject.transform,Properties.transform.localScale,options.tweenOptions);
+            return ScaleToAsync(gameObject.transform,options);
         }
+
+        public static TweenOperation ScaleToAsync(this Transform transform,ScaleToOptions options){
+            return new To<Vector3>(options.scale).Property(transform,Properties.transform.localScale,options.tweenOptions);
+        }
+        public static TweenOperation ScaleToAsync(this Transform transform,Vector3 scale,float duration = 1,EaseFunction ease = null){
+            return ScaleToAsync(transform,new ScaleToOptions(scale,ease,duration));
+        }
+
     }
 
 
@@ -115,6 +123,11 @@ namespace MS.TweenAsync{
         public static TweenOperation RotateToAsync(this GameObject gameObject,RotateToOptions options){
             return RotateToAsync(gameObject.transform,options);
         }
+        
+        public static TweenOperation RotateToAsync(this Transform transform,Vector3 eulerAngles, float duration = 1,EaseFunction ease = null){
+            return RotateToAsync(transform,new RotateToOptions(eulerAngles,ease,duration));
+        }
+
     }
 
 
@@ -165,6 +178,11 @@ namespace MS.TweenAsync{
             this.scale = scale;
             this.tweenOptions = new TweenOptions(duration);
         }
+
+        public ScaleToOptions(Vector3 scale,EaseFunction ease,float duration = 1){
+            this.scale = scale;
+            this.tweenOptions = new TweenOptions(duration,ease);
+        }
     }
 
 
@@ -174,6 +192,10 @@ namespace MS.TweenAsync{
         public RotateToOptions(Vector3 eulerAngles,float duration = 1){
             this.eulerAngles = eulerAngles;
             this.tweenOptions = new TweenOptions(duration);
+        }
+        public RotateToOptions(Vector3 eulerAngles,EaseFunction ease, float duration = 1){
+            this.eulerAngles = eulerAngles;
+            this.tweenOptions = new TweenOptions(duration,ease);
         }
     }
 

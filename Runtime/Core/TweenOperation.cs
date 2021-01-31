@@ -122,6 +122,18 @@ namespace MS.TweenAsync{
         }
 
         /// <summary>
+        /// if the operation has been completed, the call will be invoked immediately.
+        /// otherwise, the call will be invoked once the operation complete.
+        /// </summary>
+        public void CallOnCompleted(Action call){
+            if(isCompleted){
+                call();
+                return;
+            }    
+            _actionDriver.AddOnComplete(call);
+        }
+
+        /// <summary>
         /// Locate the tween to end immendiately
         /// </summary>
         public void RanToEnd(){
@@ -259,6 +271,8 @@ namespace MS.TweenAsync{
             AssertTokenNotExpired(token);
             _driver.AddOnComplete(continuation);
         }
+
+
     }
 
 }

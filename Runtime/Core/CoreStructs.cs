@@ -6,9 +6,12 @@ namespace MS.TweenAsync{
         private EaseFunction _ease;
         public bool ignoreTimeScale;
 
-        public TweenOptions(float duration){
+        public TweenOptions(float duration):this(duration,EaseFuncs.Linear){
+        }
+
+        public TweenOptions(float duration,EaseFunction ease){
             this.duration = duration;
-            _ease = EaseFuncs.Linear;
+            _ease = ease;
             ignoreTimeScale = false;
         }
 
